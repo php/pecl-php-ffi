@@ -337,8 +337,14 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, ffi_type *tdef
 		case FFI_TYPE_VOID:		*mem = NULL; return 1;
 		case FFI_TYPE_POINTER:
 			/* TODO: should verify that we are really looking for a string */
-			convert_to_string(val);
-			*mem = &Z_STRVAL_P(val);
+			if (Z_TYPE_P(val) == IS_NULL) {
+				*mem = emalloc(sizeof(void*));
+				*(void**)*mem = NULL;
+				*need_free = 1;
+			} else {
+				convert_to_string(val);
+				*mem = &Z_STRVAL_P(val);
+			}
 			return 1;
 		case FFI_TYPE_INT:
 			convert_to_long(val);

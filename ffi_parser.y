@@ -40,6 +40,8 @@
 
 #define IDENT_EQUALS(str, v)	(v.len == sizeof(str)-1 && memcmp(str, v.val, v.len) == 0)
 
+static char *yyTokenName[];
+
 static const char *get_ident_string(php_ffi_ident id)
 {
 	static char idbuf[256];
@@ -86,7 +88,7 @@ const char *php_ffi_get_token_string(int major, php_ffi_tokentype t)
 			sprintf(tokbuf, "identifier: %s", get_ident_string(t.ident));
 			break;
 		default:
-			sprintf(tokbuf, "token: %s", php_ffi_parserTokenName(major));
+			sprintf(tokbuf, "token: %s", yyTokenName[major]);
 	}
 	return tokbuf;
 }
@@ -178,8 +180,8 @@ php_ffi_type_def *register_type(struct php_ffi_def_context *ctx, php_ffi_ident s
 {
 	int i;
 	php_ffi_type_def tdef = {0}, *rettype;
-	CTX_TSRMLS_FETCH();
 	long offset = 0;
+	CTX_TSRMLS_FETCH();
 
 	tdef.nfields = ctx->n_args;
 	tdef.ffi_t.elements = emalloc((tdef.nfields + 1) * sizeof(ffi_type *));

@@ -462,6 +462,10 @@ static int php_ffi_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS)
 		efree(return_value_buf);
 	}
 
+	if (need_free) {
+		efree(need_free);
+	}
+
 	return ret;
 }
 
