@@ -77,6 +77,8 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool 
 
 	MAKE_STD_ZVAL(return_value);
 	ZVAL_NULL(return_value);
+	return_value->refcount = 0;
+	return_value->is_ref = 0;
 
 	obj = STRUCT_FETCH(object);
 
@@ -134,7 +136,7 @@ static void php_ffi_struct_property_write(zval *object, zval *member, zval *valu
 			/* TODO: read and convert the memory to a zval */
 			int need_free = 0;
 			char *addr = obj->mem + obj->tdef->field_types[i].offset;
-			if (!php_ffi_zval_to_native((void**)addr, &need_free, value, &obj->tdef->field_types[i].type TSRMLS_CC)) {
+			if (!php_ffi_zval_to_native((void**)&addr, &need_free, value, &obj->tdef->field_types[i].type TSRMLS_CC)) {
 				PHP_FFI_THROW("could not map property!");
 			}
 
@@ -390,7 +392,7 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 			*mem = emalloc(sizeof(char));
 			*need_free = 1;
 		}
-		*(unsigned char*)*mem = (unsigned char)Z_LVAL_P(val);
+		**(unsigned char**)mem = (unsigned char)Z_LVAL_P(val);
 		return 1;
 	} else if (argtype->type == &ffi_type_sint8) {
 		convert_to_long(val);
@@ -398,7 +400,7 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 			*mem = emalloc(sizeof(char));
 			*need_free = 1;
 		}
-		*(char*)*mem = (char)Z_LVAL_P(val);
+		**(char**)mem = (char)Z_LVAL_P(val);
 		return 1;
 	} else if (argtype->type == &ffi_type_uint16) {
 		convert_to_long(val);
@@ -406,7 +408,7 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 			*mem = emalloc(sizeof(short));
 			*need_free = 1;
 		}
-		*(unsigned short*)*mem = (unsigned short)Z_LVAL_P(val);
+		**(unsigned short**)mem = (unsigned short)Z_LVAL_P(val);
 		return 1;
 	} else if (argtype->type == &ffi_type_sint16) {
 		convert_to_long(val);
@@ -414,7 +416,7 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 			*mem = emalloc(sizeof(short));
 			*need_free = 1;
 		}
-		*(short*)*mem = (short)Z_LVAL_P(val);
+		**(short**)mem = (short)Z_LVAL_P(val);
 		return 1;
 	} else if (argtype->type == &ffi_type_double) {
 		convert_to_double(val);
@@ -426,7 +428,7 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 			*mem = emalloc(sizeof(float));
 			*need_free = 1;
 		}
-		*(float*)*mem = (float)Z_DVAL_P(val);
+		**(float**)mem = (float)Z_DVAL_P(val);
 		return 1;
 	} else if (argtype->type == &ffi_type_sint64 || argtype->type == &ffi_type_uint64) {
 		if (want_alloc) {
@@ -434,10 +436,10 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 			*need_free = 1;
 		}	
 		if (Z_TYPE_P(val) == IS_LONG) {
-			*(SINT64*)*mem = Z_LVAL_P(val);
+			**(SINT64**)mem = Z_LVAL_P(val);
 		} else {
 			convert_to_string(val);
-			*(SINT64*)*mem = php_ffi_strto_int64(Z_STRVAL_P(val), NULL, -1, argtype->type == &ffi_type_uint64);
+			**(SINT64**)mem = php_ffi_strto_int64(Z_STRVAL_P(val), NULL, -1, argtype->type == &ffi_type_uint64);
 		}
 		return 1;	
 	}
