@@ -4,27 +4,73 @@ Usage:
 
 First you need to declare the functions and types that you will be using:
 
-$interface_code = <<<EOD
+$win32_idl <<<EOD
 [lib='kernel32.dll'] DWORD GetTickCount();
 [lib='user32.dll'] int MessageBoxA(int handle, char *text, char *caption, int type);
 EOD;
 
 Then bind those into an ffi context:
 
-$ffi = new ffi($interface_code);
+$ffi = new ffi($win32_idl);
 
 And then use it:
 
 $count = $ffi->GetTickCount();
 echo $ffi->MessageBoxA(0, "The tick count is " . $count, "Ticky Ticky", 1);
 
+Structures:
+===========
+
+You can declare structures in your ffi IDL using C style syntax.
+Structure support is read-only for the moment.  You can pass structures
+to functions and return them (these two examples work on linux):
+
+Passing structs:
+
+<?php
+
+$ffi = new ffi(<<<EOD
+struct timeval {
+	long tv_sec;
+	long tv_usec;
+};
+struct timezone {
+	int  tz_minuteswest;
+	int  tz_dsttime;
+};
+[lib='libc.so.6'] int gettimeofday(struct timeval *tv, struct timezone *tz);
+EOD
+);
+
+$tv = new ffi_struct($ffi, "timeval");
+$tz = new ffi_struct($ffi, "timezone");
+var_dump( $ffi->gettimeofday($tv, $tz) );
+printf("tv_sec=%d tv_usec=%d\n", $tv->tv_sec, $tv->tv_usec);
+?>
+
+Returning Structs:
+
+<?php
+
+$ffi = new ffi(<<<EOD
+struct hostent {
+  	char *h_name;
+    char **h_aliases;
+	int h_addrtype;
+	int h_length;
+	char **h_addr_list;
+};
+[lib='libc.so.6'] struct hostent *gethostbyname(char *name);
+EOD
+);
+
+$he = $ffi->gethostbyname("localhost");
+printf("h_length=%d h_name=%s\n", $he->h_length, $he->h_name);
+?>
+
 Tips:
 
 For functions that expect to copy/store memory into a buffer, use
 str_repeat() to "allocate" room for that buffer.
-
-Until structure support is implemented in ffi itself, you can use
-pack()/unpack() to emulate structures.
-
 
 vim:tw=78:et
