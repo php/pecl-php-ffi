@@ -289,8 +289,8 @@ zend_object_handlers php_ffi_struct_object_handlers = {
 	php_ffi_struct_read_dimension,
 	php_ffi_struct_write_dimension,
 	NULL,
-	php_ffi_struct_object_get,
-	php_ffi_struct_object_set,
+	NULL, /* php_ffi_struct_object_get, */
+	NULL, /* php_ffi_struct_object_set, */
 	php_ffi_struct_property_exists,
 	php_ffi_struct_property_delete,
 	php_ffi_struct_dimension_exists,
@@ -302,7 +302,8 @@ zend_object_handlers php_ffi_struct_object_handlers = {
 	php_ffi_struct_class_entry_get,
 	php_ffi_struct_class_name_get,
 	php_ffi_struct_objects_compare,
-	php_ffi_struct_object_cast
+	php_ffi_struct_object_cast,
+	NULL, /* count */
 };
 
 void php_ffi_struct_dtor(void *object, zend_object_handle handle TSRMLS_DC)
