@@ -236,19 +236,18 @@ static int php_ffi_struct_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS
 static union _zend_function *php_ffi_struct_constructor_get(zval *object TSRMLS_DC)
 {
 	php_ffi_struct *obj;
-	zend_internal_function *f;
+	static zend_internal_function f;
 
 	obj = STRUCT_FETCH(object);
 
-	f = emalloc(sizeof(zend_internal_function));
-	f->type = ZEND_INTERNAL_FUNCTION;
-	f->function_name = php_ffi_struct_class_entry->name;
-	f->scope = php_ffi_struct_class_entry;
-	f->arg_info = NULL;
-	f->num_args = 0;
-	f->fn_flags = 0;
-	f->handler = ZEND_FN(php_ffi_struct_create_instance);
-	return (union _zend_function*)f;
+	f.type = ZEND_INTERNAL_FUNCTION;
+	f.function_name = php_ffi_struct_class_entry->name;
+	f.scope = php_ffi_struct_class_entry;
+	f.arg_info = NULL;
+	f.num_args = 0;
+	f.fn_flags = 0;
+	f.handler = ZEND_FN(php_ffi_struct_create_instance);
+	return (union _zend_function*)&f;
 }
 
 static zend_class_entry *php_ffi_struct_class_entry_get(zval *object TSRMLS_DC)

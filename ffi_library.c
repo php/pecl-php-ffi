@@ -497,25 +497,25 @@ static int php_ffi_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS)
 static union _zend_function *php_ffi_constructor_get(zval *object TSRMLS_DC)
 {
 	php_ffi_context *obj;
-	zend_internal_function *f;
 
 	obj = CTX_FETCH(object);
 	
 	if (obj->ce != php_ffi_context_class_entry) {
 		return obj->ce->constructor;
 	} else {
-		f = emalloc(sizeof(zend_internal_function));
-		f->function_name = obj->ce->name;
-		f->scope = obj->ce;
-		f->arg_info = NULL;
-		f->num_args = 0;
-		f->fn_flags = 0;
+		static zend_internal_function f;
 
-		f->type = ZEND_INTERNAL_FUNCTION;
-		f->handler = ZEND_FN(php_ffi_context_create_instance);
+		f.function_name = php_ffi_context_class_entry->name;
+		f.scope = php_ffi_context_class_entry;
+		f.arg_info = NULL;
+		f.num_args = 0;
+		f.fn_flags = 0;
+
+		f.type = ZEND_INTERNAL_FUNCTION;
+		f.handler = ZEND_FN(php_ffi_context_create_instance);
+	
+		return (union _zend_function*)&f;
 	}
-
-	return (union _zend_function*)f;
 }
 
 static zend_class_entry *php_ffi_class_entry_get(zval *object TSRMLS_DC)
