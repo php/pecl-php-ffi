@@ -153,6 +153,8 @@ static zval *php_ffi_struct_read_dimension(zval *object, zval *offset TSRMLS_DC)
 
 	MAKE_STD_ZVAL(return_value);
 	ZVAL_NULL(return_value);
+	return_value->refcount = 0;
+	return_value->is_ref = 0;
 
 	PHP_FFI_THROW("no dimension support yet");
 	return return_value;
