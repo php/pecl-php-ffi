@@ -15,6 +15,8 @@
 # define HAVE_MEMCPY 1
 # define STDC_HEADERS 1
 # define __i386__ 1
+#elif HAVE_CONFIG_H
+# include "config.h"
 #else
 # include "php_config.h"
 #endif

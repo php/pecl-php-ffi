@@ -146,7 +146,7 @@ overloading - see examples/ctype.php. (Ilia).
 </dir>
   </filelist>
   <deps>
-   <dep type="php" rel="ge" version="5" />
+   <dep type="php" rel="ge" version="5.0.0" />
   </deps>
  </release>
 </package>

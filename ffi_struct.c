@@ -69,7 +69,7 @@ static PHP_FUNCTION(php_ffi_struct_create_instance)
 	}
 }
 
-static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool silent TSRMLS_DC)
+static zval *php_ffi_struct_property_read(zval *object, zval *member, int type TSRMLS_DC)
 {
 	zval *return_value;
 	php_ffi_struct *obj;
@@ -147,7 +147,7 @@ static void php_ffi_struct_property_write(zval *object, zval *member, zval *valu
 	PHP_FFI_THROW("no such property");
 }
 
-static zval *php_ffi_struct_read_dimension(zval *object, zval *offset TSRMLS_DC)
+static zval *php_ffi_struct_read_dimension(zval *object, zval *offset, int type TSRMLS_DC)
 {
 	zval *return_value;
 

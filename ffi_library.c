@@ -279,7 +279,7 @@ void php_ffi_func_dtor(void *pDest)
 	}
 }
 
-static zval *php_ffi_property_read(zval *object, zval *member, zend_bool silent TSRMLS_DC)
+static zval *php_ffi_property_read(zval *object, zval *member, int type TSRMLS_DC)
 {
 	zval *return_value;
 	php_ffi_context *obj;
@@ -299,7 +299,7 @@ static void php_ffi_property_write(zval *object, zval *member, zval *value TSRML
 	PHP_FFI_THROW("ffi_libraries have no properties");
 }
 
-static zval *php_ffi_read_dimension(zval *object, zval *offset TSRMLS_DC)
+static zval *php_ffi_read_dimension(zval *object, zval *offset, int type TSRMLS_DC)
 {
 	zval *return_value;
 
@@ -407,6 +407,7 @@ static union _zend_function *php_ffi_method_get(zval *object, char *name, int le
 
 	if (func == NULL) {
 		if (obj->ce != php_ffi_context_class_entry) {
+#if 0
 			zend_internal_function *call_user_call = emalloc(sizeof(zend_internal_function));
 		        call_user_call->type = ZEND_INTERNAL_FUNCTION;
 		        call_user_call->handler = zend_std_call_user_call;
@@ -417,6 +418,9 @@ static union _zend_function *php_ffi_method_get(zval *object, char *name, int le
 		        call_user_call->function_name = estrndup(name, len);
 
 		        return (union _zend_function *)call_user_call;
+#else
+			php_error_docref(NULL TSRMLS_CC, E_ERROR, "this doesn't work right now (unable to call %s)", name);
+#endif
 		}
 
 		return NULL;
