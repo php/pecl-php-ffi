@@ -141,22 +141,22 @@ const char *php_ffi_get_token_string(int major, php_ffi_tokentype t)
 */
 /*  */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 32
+#define YYNOCODE 35
 #define YYACTIONTYPE unsigned char
 #define php_ffi_parserTOKENTYPE  php_ffi_tokentype 
 typedef union {
   php_ffi_parserTOKENTYPE yy0;
-  int yy63;
+  int yy69;
 } YYMINORTYPE;
 #define YYSTACKDEPTH 100
 #define php_ffi_parserARG_SDECL  struct php_ffi_def_context *ctx ;
 #define php_ffi_parserARG_PDECL , struct php_ffi_def_context *ctx 
 #define php_ffi_parserARG_FETCH  struct php_ffi_def_context *ctx  = yypParser->ctx 
 #define php_ffi_parserARG_STORE yypParser->ctx  = ctx 
-#define YYNSTATE 48
-#define YYNRULE 24
-#define YYERRORSYMBOL 19
-#define YYERRSYMDT yy63
+#define YYNSTATE 60
+#define YYNRULE 29
+#define YYERRORSYMBOL 22
+#define YYERRSYMDT yy69
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
@@ -209,47 +209,56 @@ typedef union {
 **  yy_default[]       Default action for each state.
 */
 static YYACTIONTYPE yy_action[] = {
- /*     0 */     4,   15,    2,   73,    1,    5,    4,   15,    2,   50,
- /*    10 */     3,    5,   25,   22,   16,   25,   22,    6,   70,   10,
- /*    20 */    66,   32,   23,   37,   33,   23,   31,   20,   29,   25,
- /*    30 */    22,   40,   57,   17,   46,   43,   35,    6,   30,   23,
- /*    40 */    26,   20,   29,   37,   33,   40,   69,   17,   46,   47,
- /*    50 */    21,   17,   17,   48,   18,   41,    7,   13,    8,    7,
- /*    60 */     9,   49,   11,   44,   19,   12,   14,   58,   24,   27,
- /*    70 */    28,   68,   34,   36,   38,   39,   42,   45,   65,
+ /*     0 */    50,   25,   29,    7,   41,   47,   23,   24,   50,    5,
+ /*    10 */     4,    7,    2,   90,    1,    6,   30,    5,    4,   62,
+ /*    20 */     2,   28,    3,    6,   19,    8,   28,   50,   40,   19,
+ /*    30 */     8,   19,    8,   40,   13,   56,   49,   87,   72,   13,
+ /*    40 */    56,   17,   19,    8,   11,   19,    8,   83,   67,   10,
+ /*    50 */    16,   34,   17,   68,   25,   17,   32,   38,   35,   23,
+ /*    60 */    20,   53,   38,   35,   37,   38,   35,   36,   11,   42,
+ /*    70 */    41,   43,   67,    9,    9,   86,   31,   18,   76,   61,
+ /*    80 */    33,   85,   12,   15,   39,   73,   60,   21,   44,   75,
+ /*    90 */    22,   45,   46,   71,   48,   82,   51,   26,   52,   14,
+ /*   100 */    54,   27,   55,   57,   58,   59,
 };
 static YYCODETYPE yy_lookahead[] = {
- /*     0 */    25,   26,   27,   28,   29,   30,   25,   26,   27,    0,
- /*    10 */    29,   30,    4,    5,   17,    4,    5,    8,   10,    4,
- /*    20 */     9,   24,   14,   14,   15,   14,   16,   17,   18,    4,
- /*    30 */     5,   17,   11,    1,   20,   21,    4,    8,    2,   14,
- /*    40 */    16,   17,   18,   14,   15,   17,   10,    1,   20,   21,
- /*    50 */     4,    1,    1,    0,    4,    4,   22,   23,    2,   22,
- /*    60 */    23,    0,    3,    9,    7,   13,   11,   11,    4,   10,
- /*    70 */    12,   10,   17,   12,    4,    6,   12,   12,    9,
+ /*     0 */    18,   18,   18,   21,   25,   26,   23,   24,   18,   27,
+ /*    10 */    28,   21,   30,   31,   32,   33,    5,   27,   28,    0,
+ /*    20 */    30,    2,   32,   33,    5,    6,    2,   18,    9,    5,
+ /*    30 */     6,    5,    6,    9,   15,   16,   27,   11,    5,   15,
+ /*    40 */    16,   15,    5,    6,    1,    5,    6,   10,    5,    1,
+ /*    50 */     7,   13,   15,    5,   18,   15,   17,   18,   19,   23,
+ /*    60 */    24,   17,   18,   19,   17,   18,   19,    3,    1,    3,
+ /*    70 */    25,   26,    5,   20,   20,   11,    8,    5,   12,    0,
+ /*    80 */    11,   11,   29,   29,    5,    5,    0,   10,    5,   12,
+ /*    90 */    13,    4,   14,    5,   12,   10,    5,    5,    8,    5,
+ /*   100 */    11,   13,   13,   18,    5,   13,
 };
 #define YY_SHIFT_USE_DFLT (-1)
 static signed char yy_shift_ofst[] = {
- /*     0 */    29,   53,    9,   61,   -1,   -1,   15,   56,   15,   21,
- /*    10 */    59,   52,   -1,   55,   -1,   25,   50,   -1,   57,    8,
- /*    20 */    46,   -1,   -1,   64,   -1,   -1,   59,   58,   -1,   36,
- /*    30 */     8,   61,   -1,   25,   32,   61,   -1,   70,   69,   25,
- /*    40 */    51,   64,   -1,   54,   65,   -1,   11,   69,
+ /*     0 */    24,   86,   19,   79,   -1,   -1,   -1,   -1,   67,   48,
+ /*    10 */    -1,   -1,   88,   94,   43,   33,   40,   72,   67,   80,
+ /*    20 */    77,   77,   -1,   37,   85,   92,   88,   -1,   40,   11,
+ /*    30 */    68,   26,   69,   38,   -1,   64,   26,   70,   79,   -1,
+ /*    40 */    83,   66,   83,   77,   87,   78,   -1,   82,   40,   -1,
+ /*    50 */    91,   90,   26,   89,   89,   -1,   40,   99,   92,   -1,
 };
-#define YY_REDUCE_USE_DFLT (-26)
+#define YY_REDUCE_USE_DFLT (-22)
 static signed char yy_reduce_ofst[] = {
- /*     0 */   -25,  -26,  -19,  -26,  -26,  -26,   34,  -26,   37,  -26,
- /*    10 */   -26,  -26,  -26,  -26,  -26,   -3,  -26,  -26,  -26,   24,
- /*    20 */   -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
- /*    30 */    10,  -26,  -26,   55,  -26,  -26,  -26,  -26,  -26,   14,
- /*    40 */   -26,  -26,  -26,  -26,  -26,  -26,   28,  -26,
+ /*     0 */   -18,  -22,  -10,  -22,  -22,  -22,  -22,  -22,   53,  -22,
+ /*    10 */   -22,  -22,  -22,  -22,   54,  -22,   36,  -22,   54,  -22,
+ /*    20 */   -22,  -22,  -22,  -17,  -22,  -22,  -22,  -22,  -16,  -22,
+ /*    30 */   -22,   39,  -22,  -22,  -22,  -22,   47,  -22,  -22,  -22,
+ /*    40 */   -21,  -22,   45,  -22,  -22,  -22,  -22,  -22,    9,  -22,
+ /*    50 */   -22,  -22,   44,  -22,  -22,  -22,   85,  -22,  -22,  -22,
 };
 static YYACTIONTYPE yy_default[] = {
- /*     0 */    72,   72,   72,   72,   51,   52,   72,   72,   72,   72,
- /*    10 */    72,   72,   59,   72,   60,   72,   72,   53,   72,   72,
- /*    20 */    72,   71,   54,   72,   55,   56,   72,   72,   62,   72,
- /*    30 */    72,   72,   61,   72,   72,   72,   63,   72,   72,   72,
- /*    40 */    72,   72,   67,   72,   72,   64,   72,   72,
+ /*     0 */    89,   89,   89,   89,   63,   64,   65,   66,   89,   89,
+ /*    10 */    70,   69,   89,   89,   89,   89,   89,   89,   89,   89,
+ /*    20 */    89,   89,   81,   89,   89,   89,   89,   84,   89,   89,
+ /*    30 */    89,   89,   89,   89,   74,   89,   89,   89,   89,   88,
+ /*    40 */    89,   89,   89,   89,   89,   89,   77,   89,   89,   78,
+ /*    50 */    89,   89,   89,   89,   89,   79,   89,   89,   89,   80,
 };
 #define YY_SZ_ACTTAB (sizeof(yy_action)/sizeof(yy_action[0]))
 
@@ -336,14 +345,15 @@ void php_ffi_parserTrace(FILE *TraceFILE, const char *zTracePrompt){
 /* For tracing shifts, the names of all terminals and nonterminals
 ** are required.  The following table supplies these names */
 static const char *yyTokenName[] = { 
-  "$",             "ASTERISK",      "COMMA",         "EQUALS",      
-  "IDENT",         "INTRINSIC",     "LBRACE",        "LPAREN",      
-  "LSQUARE",       "RBRACE",        "RPAREN",        "RSQUARE",     
-  "SEMI",          "STRING",        "STRUCT",        "TYPEDEF",     
-  "arg_list",      "arg_type",      "argument",      "error",       
-  "field_def",     "field_list",    "func_attribute",  "func_attribute_list",
-  "func_proto",    "func_proto_with_attributes",  "optional_func_attribute_list",  "top_item",    
-  "top_level",     "top_list",      "type_def",    
+  "$",             "ASTERISK",      "CALLBACK",      "COMMA",       
+  "EQUALS",        "IDENT",         "INTRINSIC",     "LBRACE",      
+  "LPAREN",        "LSQUARE",       "RBRACE",        "RPAREN",      
+  "RSQUARE",       "SEMI",          "STRING",        "STRUCT",      
+  "TYPEDEF",       "arg_list",      "arg_type",      "argument",    
+  "asterisk_list",  "callback_def",  "error",         "field_def",   
+  "field_list",    "func_attribute",  "func_attribute_list",  "func_proto",  
+  "func_proto_with_attributes",  "optional_asterisk_list",  "top_item",      "top_level",   
+  "top_list",      "type_def",    
 };
 #endif /* NDEBUG */
 
@@ -355,26 +365,31 @@ static const char *yyRuleName[] = {
  /*   1 */ "top_list ::= top_item top_list",
  /*   2 */ "top_list ::= top_item",
  /*   3 */ "top_item ::= func_proto_with_attributes",
- /*   4 */ "top_item ::= type_def",
- /*   5 */ "arg_type ::= arg_type ASTERISK",
- /*   6 */ "arg_type ::= INTRINSIC",
- /*   7 */ "arg_type ::= STRUCT IDENT",
- /*   8 */ "arg_type ::= IDENT",
- /*   9 */ "func_attribute_list ::= func_attribute COMMA func_attribute_list",
- /*  10 */ "func_attribute_list ::= func_attribute",
- /*  11 */ "func_attribute ::= IDENT EQUALS STRING",
- /*  12 */ "optional_func_attribute_list ::= LSQUARE func_attribute_list RSQUARE",
- /*  13 */ "func_proto_with_attributes ::= optional_func_attribute_list func_proto",
- /*  14 */ "func_proto ::= arg_type IDENT LPAREN arg_list RPAREN SEMI",
- /*  15 */ "type_def ::= TYPEDEF arg_type IDENT SEMI",
- /*  16 */ "type_def ::= STRUCT IDENT LBRACE field_list RBRACE SEMI",
- /*  17 */ "field_list ::= field_def field_list",
- /*  18 */ "field_list ::= field_def",
- /*  19 */ "field_def ::= arg_type IDENT SEMI",
- /*  20 */ "arg_list ::= argument COMMA arg_list",
- /*  21 */ "arg_list ::= argument",
- /*  22 */ "arg_list ::=",
- /*  23 */ "argument ::= arg_type IDENT",
+ /*   4 */ "top_item ::= func_proto",
+ /*   5 */ "top_item ::= type_def",
+ /*   6 */ "top_item ::= callback_def",
+ /*   7 */ "optional_asterisk_list ::=",
+ /*   8 */ "optional_asterisk_list ::= asterisk_list",
+ /*   9 */ "asterisk_list ::= ASTERISK",
+ /*  10 */ "asterisk_list ::= asterisk_list ASTERISK",
+ /*  11 */ "arg_type ::= INTRINSIC optional_asterisk_list",
+ /*  12 */ "arg_type ::= STRUCT IDENT optional_asterisk_list",
+ /*  13 */ "arg_type ::= IDENT",
+ /*  14 */ "callback_def ::= CALLBACK arg_type IDENT LPAREN arg_list RPAREN SEMI",
+ /*  15 */ "func_attribute_list ::= func_attribute COMMA func_attribute_list",
+ /*  16 */ "func_attribute_list ::= func_attribute",
+ /*  17 */ "func_attribute ::= IDENT EQUALS STRING",
+ /*  18 */ "func_proto_with_attributes ::= LSQUARE func_attribute_list RSQUARE func_proto",
+ /*  19 */ "func_proto ::= arg_type IDENT LPAREN arg_list RPAREN SEMI",
+ /*  20 */ "type_def ::= TYPEDEF arg_type IDENT SEMI",
+ /*  21 */ "type_def ::= STRUCT IDENT LBRACE field_list RBRACE SEMI",
+ /*  22 */ "field_list ::= field_def field_list",
+ /*  23 */ "field_list ::= field_def",
+ /*  24 */ "field_def ::= arg_type IDENT SEMI",
+ /*  25 */ "arg_list ::= argument COMMA arg_list",
+ /*  26 */ "arg_list ::= argument",
+ /*  27 */ "arg_list ::=",
+ /*  28 */ "argument ::= arg_type IDENT",
 };
 #endif /* NDEBUG */
 
@@ -604,30 +619,35 @@ static struct {
   YYCODETYPE lhs;         /* Symbol on the left-hand side of the rule */
   unsigned char nrhs;     /* Number of right-hand side symbols in the rule */
 } yyRuleInfo[] = {
-  { 28, 1 },
-  { 29, 2 },
+  { 31, 1 },
+  { 32, 2 },
+  { 32, 1 },
+  { 30, 1 },
+  { 30, 1 },
+  { 30, 1 },
+  { 30, 1 },
+  { 29, 0 },
   { 29, 1 },
-  { 27, 1 },
-  { 27, 1 },
-  { 17, 2 },
-  { 17, 1 },
-  { 17, 2 },
-  { 17, 1 },
-  { 23, 3 },
-  { 23, 1 },
-  { 22, 3 },
-  { 26, 3 },
-  { 25, 2 },
-  { 24, 6 },
-  { 30, 4 },
-  { 30, 6 },
-  { 21, 2 },
-  { 21, 1 },
-  { 20, 3 },
-  { 16, 3 },
-  { 16, 1 },
-  { 16, 0 },
+  { 20, 1 },
+  { 20, 2 },
   { 18, 2 },
+  { 18, 3 },
+  { 18, 1 },
+  { 21, 7 },
+  { 26, 3 },
+  { 26, 1 },
+  { 25, 3 },
+  { 28, 4 },
+  { 27, 6 },
+  { 33, 4 },
+  { 33, 6 },
+  { 24, 2 },
+  { 24, 1 },
+  { 23, 3 },
+  { 17, 3 },
+  { 17, 1 },
+  { 17, 0 },
+  { 19, 2 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -678,44 +698,83 @@ static void yy_reduce(
         /* No destructor defined for func_proto_with_attributes */
         break;
       case 4:
-        /* No destructor defined for type_def */
+        /* No destructor defined for func_proto */
         break;
       case 5:
-#line 100 "..\\pecl\\ffi\\ffi_parser.y"
-{ yygotominor.yy0 = yymsp[-1].minor.yy0; yygotominor.yy0.type.ptr_levels++; }
-#line 686 "..\\pecl\\ffi\\ffi_parser.c"
-        /* No destructor defined for ASTERISK */
+        /* No destructor defined for type_def */
         break;
       case 6:
-#line 101 "..\\pecl\\ffi\\ffi_parser.y"
-{ yygotominor.yy0 = yymsp[0].minor.yy0; yygotominor.yy0.type.ptr_levels = 0;	}
-#line 692 "..\\pecl\\ffi\\ffi_parser.c"
+        /* No destructor defined for callback_def */
         break;
       case 7:
 #line 102 "..\\pecl\\ffi\\ffi_parser.y"
-{
-   	yygotominor.yy0.type.intrinsic_type = FFI_TYPE_STRUCT;
-	yygotominor.yy0.type.struct_name = yymsp[0].minor.yy0.ident;
-   	yygotominor.yy0.type.ptr_levels = 0;
-}
-#line 701 "..\\pecl\\ffi\\ffi_parser.c"
-        /* No destructor defined for STRUCT */
+{ yygotominor.yy0.type.ptr_levels = 0; }
+#line 712 "..\\pecl\\ffi\\ffi_parser.c"
         break;
       case 8:
-#line 108 "..\\pecl\\ffi\\ffi_parser.y"
-{ /* TODO */ }
-#line 707 "..\\pecl\\ffi\\ffi_parser.c"
+#line 103 "..\\pecl\\ffi\\ffi_parser.y"
+{ yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 717 "..\\pecl\\ffi\\ffi_parser.c"
         break;
       case 9:
+#line 105 "..\\pecl\\ffi\\ffi_parser.y"
+{ yygotominor.yy0.type.ptr_levels = 1; }
+#line 722 "..\\pecl\\ffi\\ffi_parser.c"
+        /* No destructor defined for ASTERISK */
+        break;
+      case 10:
+#line 106 "..\\pecl\\ffi\\ffi_parser.y"
+{ yygotominor.yy0 = yymsp[-1].minor.yy0; yygotominor.yy0.type.ptr_levels++; }
+#line 728 "..\\pecl\\ffi\\ffi_parser.c"
+        /* No destructor defined for ASTERISK */
+        break;
+      case 11:
+#line 108 "..\\pecl\\ffi\\ffi_parser.y"
+{ yygotominor.yy0 = yymsp[-1].minor.yy0; yygotominor.yy0.type.ptr_levels = yymsp[0].minor.yy0.type.ptr_levels; }
+#line 734 "..\\pecl\\ffi\\ffi_parser.c"
+        break;
+      case 12:
+#line 109 "..\\pecl\\ffi\\ffi_parser.y"
+{
+   	yygotominor.yy0.type.intrinsic_type = FFI_TYPE_STRUCT;
+	yygotominor.yy0.type.struct_name = yymsp[-1].minor.yy0.ident;
+   	yygotominor.yy0.type.ptr_levels = yymsp[0].minor.yy0.type.ptr_levels;
+}
+#line 743 "..\\pecl\\ffi\\ffi_parser.c"
+        /* No destructor defined for STRUCT */
+        break;
+      case 13:
+#line 115 "..\\pecl\\ffi\\ffi_parser.y"
+{
+	CTX_TSRMLS_FETCH();
+	/* TODO: lookup ident (including callback types) */
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unrecognized type name `%s'", get_ident_string(yymsp[0].minor.yy0.ident));	
+}
+#line 753 "..\\pecl\\ffi\\ffi_parser.c"
+        break;
+      case 14:
+#line 123 "..\\pecl\\ffi\\ffi_parser.y"
+{
+	CTX_TSRMLS_FETCH();
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "callback support not complete");	
+}
+#line 761 "..\\pecl\\ffi\\ffi_parser.c"
+        /* No destructor defined for CALLBACK */
+        /* No destructor defined for LPAREN */
+        /* No destructor defined for arg_list */
+        /* No destructor defined for RPAREN */
+        /* No destructor defined for SEMI */
+        break;
+      case 15:
         /* No destructor defined for func_attribute */
         /* No destructor defined for COMMA */
         /* No destructor defined for func_attribute_list */
         break;
-      case 10:
+      case 16:
         /* No destructor defined for func_attribute */
         break;
-      case 11:
-#line 113 "..\\pecl\\ffi\\ffi_parser.y"
+      case 17:
+#line 131 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	if (IDENT_EQUALS("lib", yymsp[-2].minor.yy0.ident)) {
 		ctx->libname = yymsp[0].minor.yy0.ident;
@@ -724,83 +783,80 @@ static void yy_reduce(
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unsupported attribute %s", get_ident_string(yymsp[-2].minor.yy0.ident));
 	}
 }
-#line 727 "..\\pecl\\ffi\\ffi_parser.c"
+#line 786 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for EQUALS */
         break;
-      case 12:
+      case 18:
         /* No destructor defined for LSQUARE */
         /* No destructor defined for func_attribute_list */
         /* No destructor defined for RSQUARE */
         break;
-      case 13:
-        /* No destructor defined for optional_func_attribute_list */
-        break;
-      case 14:
-#line 126 "..\\pecl\\ffi\\ffi_parser.y"
+      case 19:
+#line 142 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	yygotominor.yy0.func = php_ffi_parser_register_func(ctx, yymsp[-5].minor.yy0.type, yymsp[-4].minor.yy0.ident);
 	ctx->n_args = 0;
 }
-#line 744 "..\\pecl\\ffi\\ffi_parser.c"
+#line 800 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for LPAREN */
         /* No destructor defined for arg_list */
         /* No destructor defined for RPAREN */
         /* No destructor defined for SEMI */
         break;
-      case 15:
-#line 131 "..\\pecl\\ffi\\ffi_parser.y"
+      case 20:
+#line 147 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	CTX_TSRMLS_FETCH();
 	php_error_docref(NULL TSRMLS_CC, E_WARNING, "aliasing typedefs are not yet implemented");
 }
-#line 756 "..\\pecl\\ffi\\ffi_parser.c"
+#line 812 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for TYPEDEF */
         /* No destructor defined for SEMI */
         break;
-      case 16:
-#line 136 "..\\pecl\\ffi\\ffi_parser.y"
+      case 21:
+#line 152 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	php_ffi_parser_register_type(ctx, yymsp[-4].minor.yy0.ident);	
 	ctx->n_args = 0;
 }
-#line 766 "..\\pecl\\ffi\\ffi_parser.c"
+#line 822 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for STRUCT */
         /* No destructor defined for LBRACE */
         /* No destructor defined for field_list */
         /* No destructor defined for RBRACE */
         /* No destructor defined for SEMI */
         break;
-      case 17:
+      case 22:
         /* No destructor defined for field_def */
         /* No destructor defined for field_list */
         break;
-      case 18:
+      case 23:
         /* No destructor defined for field_def */
         break;
-      case 19:
-#line 144 "..\\pecl\\ffi\\ffi_parser.y"
+      case 24:
+#line 160 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	php_ffi_parser_add_arg(ctx, yymsp[-2].minor.yy0.type, yymsp[-1].minor.yy0.ident);
 }
-#line 785 "..\\pecl\\ffi\\ffi_parser.c"
+#line 841 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for SEMI */
         break;
-      case 20:
+      case 25:
         /* No destructor defined for argument */
         /* No destructor defined for COMMA */
         /* No destructor defined for arg_list */
         break;
-      case 21:
+      case 26:
         /* No destructor defined for argument */
         break;
-      case 22:
+      case 27:
         break;
-      case 23:
-#line 152 "..\\pecl\\ffi\\ffi_parser.y"
+      case 28:
+#line 168 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	php_ffi_parser_add_arg(ctx, yymsp[-1].minor.yy0.type, yymsp[0].minor.yy0.ident);
 }
-#line 803 "..\\pecl\\ffi\\ffi_parser.c"
+#line 859 "..\\pecl\\ffi\\ffi_parser.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -832,7 +888,7 @@ static void yy_parse_failed(
   ** parser fails */
 #line 5 "..\\pecl\\ffi\\ffi_parser.y"
  ctx->failed = 1; printf("FAIL: parser failed - %d errors\n", ctx->errors); 
-#line 835 "..\\pecl\\ffi\\ffi_parser.c"
+#line 891 "..\\pecl\\ffi\\ffi_parser.c"
   php_ffi_parserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -848,7 +904,7 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 6 "..\\pecl\\ffi\\ffi_parser.y"
  ctx->errors++; printf("SYNTAX: entering error recovery near token %s\n", php_ffi_get_token_string(yymajor, TOKEN)); 
-#line 851 "..\\pecl\\ffi\\ffi_parser.c"
+#line 907 "..\\pecl\\ffi\\ffi_parser.c"
   php_ffi_parserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
