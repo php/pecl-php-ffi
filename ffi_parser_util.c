@@ -121,11 +121,11 @@ php_ffi_type_def *php_ffi_parser_register_type(struct php_ffi_def_context *ctx, 
 	CTX_TSRMLS_FETCH();
 
 	tdef.nfields = ctx->n_args;
-	tdef.ffi_t.elements = emalloc((tdef.nfields + 1) * sizeof(ffi_type *));
+	tdef.ffi_t.elements = safe_emalloc((tdef.nfields + 1), sizeof(ffi_type *), 0);
 	tdef.ffi_t.elements[tdef.nfields] = NULL; /* ffi wants a NULL terminated array */
 	tdef.struct_name = estrndup(struct_name.val, struct_name.len);
-	tdef.field_names = emalloc(tdef.nfields * sizeof(char*));
-	tdef.field_types = emalloc(tdef.nfields * sizeof(struct php_ffi_field_def));
+	tdef.field_names = safe_emalloc(tdef.nfields, sizeof(char*), 0);
+	tdef.field_types = safe_emalloc(tdef.nfields, sizeof(struct php_ffi_field_def), 0);
 	
 	for (i = 0; i < tdef.nfields; i++) {
 		tdef.field_types[i].offset = offset;
