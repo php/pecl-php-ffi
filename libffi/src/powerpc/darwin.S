@@ -161,7 +161,8 @@ _ffi_call_AIX:
 /* END(_ffi_call_AIX)  */
 
 .data
-.section __TEXT,__eh_frame
+.section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms
+_EH_unwind_info:
 Lframe1:
 	.set	L$set$0,LECIE1-LSCIE1
 	.long	L$set$0	; Length of Common Information Entry
