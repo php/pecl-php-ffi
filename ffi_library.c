@@ -114,6 +114,9 @@ static int parse_defs(php_ffi_context *the_ctx, char *proto_text)
 		while (isspace(*c)) {
 			c++;
 		}
+		if (*c == '\0') {
+			break;
+		}
 		tok_start = c;
 
 		switch (*c) {
