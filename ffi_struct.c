@@ -80,6 +80,14 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool 
 
 	obj = STRUCT_FETCH(object);
 
+	if (strcmp(Z_STRVAL_P(member), "__as_binary") == 0) {
+		ZVAL_STRINGL(return_value, obj->mem, obj->memlen, 1);
+		return return_value;
+	} else if (strcmp(Z_STRVAL_P(member), "__sizeof") == 0) {
+		ZVAL_LONG(return_value, obj->memlen);
+		return return_value;
+	}
+	
 	/* look for the property */
 	for (i = 0; i < obj->tdef->nfields; i++) {
 		if (strcmp(Z_STRVAL_P(member), obj->tdef->field_names[i]) == 0) {
@@ -87,7 +95,7 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool 
 			char *addr = obj->mem + obj->tdef->field_types[i].offset;
 			
 			/* TODO: handle the case where ptr_levels is non zero! */
-			if (!php_ffi_native_to_zval(addr, obj->tdef->ffi_t.elements[i], return_value TSRMLS_CC)) {
+			if (!php_ffi_native_to_zval(addr, &obj->tdef->field_types[i].type, return_value TSRMLS_CC)) {
 				PHP_FFI_THROW("could not map property!");
 			}
 			return return_value;
@@ -101,28 +109,40 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool 
 
 static void php_ffi_struct_property_write(zval *object, zval *member, zval *value TSRMLS_DC)
 {
-#if 0
-	zval *return_value;
 	php_ffi_struct *obj;
 	int i;
 
-	MAKE_STD_ZVAL(return_value);
-	ZVAL_NULL(return_value);
-
 	obj = STRUCT_FETCH(object);
 
+	if (strcmp(Z_STRVAL_P(member), "__as_binary") == 0) {
+		if (Z_TYPE_P(value) != IS_STRING)  {
+			PHP_FFI_THROW("__as_binary value in assignment *MUST* be a string");
+			return;
+		}
+		if (Z_STRLEN_P(value) != obj->memlen) {
+			PHP_FFI_THROW("length of binary string *MUST* match size of structure");
+			return;
+		}
+
+		memcpy(obj->mem, Z_STRVAL_P(value), obj->memlen);
+		return;
+	}
+	
 	/* look for the property */
 	for (i = 0; i < obj->tdef->nfields; i++) {
 		if (strcmp(Z_STRVAL_P(member), obj->tdef->field_names[i]) == 0) {
 			/* TODO: read and convert the memory to a zval */
-			return return_value;
+			int need_free = 0;
+			char *addr = obj->mem + obj->tdef->field_types[i].offset;
+			if (!php_ffi_zval_to_native((void**)addr, &need_free, value, &obj->tdef->field_types[i].type TSRMLS_CC)) {
+				PHP_FFI_THROW("could not map property!");
+			}
+
+			return;
 		}
 	}
 
 	PHP_FFI_THROW("no such property");
-
-	return return_value;
-#endif
 }
 
 static zval *php_ffi_struct_read_dimension(zval *object, zval *offset TSRMLS_DC)
@@ -200,7 +220,7 @@ static union _zend_function *php_ffi_struct_method_get(zval *object, char *name,
 	obj = STRUCT_FETCH(object);
 
 	/* TODO: worry about pointers to functions? */
-
+	
 	return NULL;
 }
 
@@ -222,8 +242,8 @@ static union _zend_function *php_ffi_struct_constructor_get(zval *object TSRMLS_
 
 	f = emalloc(sizeof(zend_internal_function));
 	f->type = ZEND_INTERNAL_FUNCTION;
-	f->function_name = obj->ce->name;
-	f->scope = obj->ce;
+	f->function_name = php_ffi_struct_class_entry->name;
+	f->scope = php_ffi_struct_class_entry;
 	f->arg_info = NULL;
 	f->num_args = 0;
 	f->fn_flags = 0;
@@ -233,10 +253,7 @@ static union _zend_function *php_ffi_struct_constructor_get(zval *object TSRMLS_
 
 static zend_class_entry *php_ffi_struct_class_entry_get(zval *object TSRMLS_DC)
 {
-	php_ffi_struct *obj;
-	obj = STRUCT_FETCH(object);
-
-	return obj->ce;
+	return php_ffi_struct_class_entry;
 }
 
 static int php_ffi_struct_class_name_get(zval *object, char **class_name, zend_uint *class_name_len, int parent TSRMLS_DC)
@@ -244,8 +261,8 @@ static int php_ffi_struct_class_name_get(zval *object, char **class_name, zend_u
 	php_ffi_struct *obj;
 	obj = STRUCT_FETCH(object);
 
-	*class_name = estrndup(obj->ce->name, obj->ce->name_length);
-	*class_name_len = obj->ce->name_length;
+	*class_name = estrndup(php_ffi_struct_class_entry->name, php_ffi_struct_class_entry->name_length);
+	*class_name_len = php_ffi_struct_class_entry->name_length;
 
 	return 0;
 }
@@ -323,7 +340,6 @@ zend_object_value php_ffi_struct_object_new(zend_class_entry *ce TSRMLS_DC)
 	zend_object_value retval;
 
 	obj = ecalloc(1, sizeof(*obj));
-	obj->ce = ce;
 	
 	retval.handle = zend_objects_store_put(obj, php_ffi_struct_dtor, php_ffi_struct_object_clone TSRMLS_CC);
 	retval.handlers = &php_ffi_struct_object_handlers;
@@ -331,68 +347,77 @@ zend_object_value php_ffi_struct_object_new(zend_class_entry *ce TSRMLS_DC)
 	return retval;
 }
 
+
 /* Given a zval and a type spec, copy or reference the data from
- * the zval and set *mem to that thing */
-int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, ffi_type *tdef TSRMLS_DC)
+ * the zval and set *mem to point to that thing */
+int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi_typed_arg *argtype TSRMLS_DC)
 {
+	int want_alloc = *need_free;
 	*need_free = 0;
 
-	switch (tdef->type) {
-		case FFI_TYPE_VOID:		*mem = NULL; return 1;
-		case FFI_TYPE_POINTER:
-			if (Z_TYPE_P(val) == IS_NULL) {
-				*mem = emalloc(sizeof(void*));
-				*(void**)*mem = NULL;
-				*need_free = 1;
-			} else if (Z_TYPE_P(val) == IS_OBJECT) {
-				if (Z_OBJCE_P(val) == php_ffi_struct_class_entry) {
-					php_ffi_struct *str = STRUCT_FETCH(val);
-					*mem = &str->mem;
-					return 1;
-				} else {
-					return 0;
-				}
-			} else {
-				convert_to_string(val);
-				*mem = &Z_STRVAL_P(val);
+	if (argtype->ptr_levels && Z_TYPE_P(val) == IS_NULL) {
+		if (want_alloc) {
+			*mem = emalloc(sizeof(void*));
+			*need_free = 1;
+		}
+		*(void**)*mem = NULL;
+		return 1;
+	} else if (argtype->ptr_levels == 1) {
+		if (Z_TYPE_P(val) == IS_OBJECT) {
+			if (Z_OBJCE_P(val) == php_ffi_struct_class_entry) {
+				php_ffi_struct *str = STRUCT_FETCH(val);
+				*mem = &str->mem;
+				return 1;
 			}
-			return 1;
-		case FFI_TYPE_INT:
-			convert_to_long(val);
-			*mem = &Z_LVAL_P(val);
-			return 1;
+			return 0;
+		}
+		convert_to_string(val);
+		*mem = &Z_STRVAL_P(val);
+		return 1;
+	} else if (argtype->ptr_levels) {
+		return 0;
 	}
 
-	/* other stuff that we can't safely detect using the switch statement */
-	if (tdef == &ffi_type_slong || tdef == &ffi_type_sint || tdef == &ffi_type_uint32 || tdef == &ffi_type_sint32) {
+	/* so it's not a pointer */
+
+	if (argtype->type == &ffi_type_slong || argtype->type == &ffi_type_sint ||
+			argtype->type == &ffi_type_uint32 || argtype->type == &ffi_type_sint32) {
 		convert_to_long(val);
-		*mem = &Z_LVAL_P(val);
+		*(long *)mem = Z_LVAL_P(val);
 		return 1;
-	} else if (tdef == &ffi_type_uint8) {
+	} else if (argtype->type == &ffi_type_uint8) {
 		convert_to_long(val);
-		*mem = emalloc(sizeof(char));
+		if (want_alloc) {
+			*mem = emalloc(sizeof(char));
+			*need_free = 1;
+		}
 		*(unsigned char*)mem = (unsigned char)Z_LVAL_P(val);
-		*need_free = 1;
 		return 1;
-	} else if (tdef == &ffi_type_sint8) {
+	} else if (argtype->type == &ffi_type_sint8) {
 		convert_to_long(val);
-		*mem = emalloc(sizeof(char));
+		if (want_alloc) {
+			*mem = emalloc(sizeof(char));
+			*need_free = 1;
+		}
 		*(char*)mem = (char)Z_LVAL_P(val);
-		*need_free = 1;
 		return 1;
-	} else if (tdef == &ffi_type_uint16) {
+	} else if (argtype->type == &ffi_type_uint16) {
 		convert_to_long(val);
-		*mem = emalloc(sizeof(short));
+		if (want_alloc) {
+			*mem = emalloc(sizeof(short));
+			*need_free = 1;
+		}
 		*(unsigned short*)mem = (unsigned short)Z_LVAL_P(val);
-		*need_free = 1;
 		return 1;
-	} else if (tdef == &ffi_type_sint16) {
+	} else if (argtype->type == &ffi_type_sint16) {
 		convert_to_long(val);
-		*mem = emalloc(sizeof(short));
+		if (want_alloc) {
+			*mem = emalloc(sizeof(short));
+			*need_free = 1;
+		}
 		*(short*)mem = (short)Z_LVAL_P(val);
-		*need_free = 1;
 		return 1;
-	} else if (tdef == &ffi_type_double) {
+	} else if (argtype->type == &ffi_type_double) {
 		convert_to_double(val);
 		*mem = &Z_DVAL_P(val);
 		return 1;
@@ -401,33 +426,53 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, ffi_type *tdef
 	return 0;
 }
 
-int php_ffi_native_to_zval(void *mem, ffi_type *tdef, zval *val TSRMLS_DC)
+int php_ffi_native_to_zval(void *mem, struct php_ffi_typed_arg *argtype, zval *val TSRMLS_DC)
 {
-	if (tdef == &ffi_type_slong || tdef == &ffi_type_sint || tdef == &ffi_type_uint32 || tdef == &ffi_type_sint32) {
+	php_ffi_struct *str;
+	
+	if (argtype->ptr_levels == 1) {
+		if (argtype->tdef) {
+			/* pointer to a structure type */
+
+			str = ecalloc(1, sizeof(*str));
+			str->mem = *(char**)mem;
+			str->tdef = argtype->tdef;
+			str->memlen = str->tdef->total_size;
+
+			Z_TYPE_P(val) = IS_OBJECT;
+			Z_OBJ_HANDLE_P(val) = zend_objects_store_put(str,
+					php_ffi_struct_dtor, php_ffi_struct_object_clone TSRMLS_CC);
+			Z_OBJ_HT_P(val) = &php_ffi_struct_object_handlers;
+			return 1;
+		}
+		if (argtype->type == &ffi_type_uint8 || argtype->type == &ffi_type_sint8) {
+			ZVAL_STRING(val, *(char**)mem, 1);
+			return 1;
+		}
+		return 0;
+	}
+	
+	if (argtype->type == &ffi_type_slong || argtype->type == &ffi_type_sint ||
+			argtype->type == &ffi_type_uint32 || argtype->type == &ffi_type_sint32) {
 		ZVAL_LONG(val, *(long*)mem);
 		return 1;
-	} else if (tdef == &ffi_type_uint8) {
+	} else if (argtype->type == &ffi_type_uint8) {
 		ZVAL_LONG(val, *(unsigned char*)mem);
 		return 1;
-	} else if (tdef == &ffi_type_sint8) {
+	} else if (argtype->type == &ffi_type_sint8) {
 		ZVAL_LONG(val, *(char*)mem);
 		return 1;
-	} else if (tdef == &ffi_type_uint16) {
+	} else if (argtype->type == &ffi_type_uint16) {
 		ZVAL_LONG(val, *(unsigned short*)mem);
 		return 1;
-	} else if (tdef == &ffi_type_sint16) {
+	} else if (argtype->type == &ffi_type_sint16) {
 		ZVAL_LONG(val, *(short*)mem);
 		return 1;
-	} else if (tdef == &ffi_type_double) {
+	} else if (argtype->type == &ffi_type_double) {
 		ZVAL_DOUBLE(val, *(double*)mem);
-		return 1;
-	} else if (tdef == &ffi_type_pointer) {
-		/* HACK! */
-		ZVAL_STRING(val, *(char**)mem, 1);
 		return 1;
 	}
 
-	printf("native to zval: tdef=%p\n", tdef);
 	return 0;
 }
 

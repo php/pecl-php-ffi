@@ -42,7 +42,7 @@ void php_ffi_parser_add_arg(struct php_ffi_def_context *ctx, php_ffi_type_ref ty
 }
 
 ffi_type *php_ffi_parser_resolve_type(struct php_ffi_def_context *ctx, php_ffi_type_ref type,
-	struct php_ffi_field_def *fdef, php_ffi_type_def **tell_me_tdef TSRMLS_DC)
+	struct php_ffi_field_def *fdef, struct php_ffi_typed_arg *arg TSRMLS_DC)
 {
 	ffi_type *ft = NULL;
 	php_ffi_type_def *tdef = NULL;
@@ -76,18 +76,21 @@ ffi_type *php_ffi_parser_resolve_type(struct php_ffi_def_context *ctx, php_ffi_t
 	}
 
 	if (fdef) {
-		fdef->intrinsic_type = type.intrinsic_type;
-		fdef->type = tdef;
-		fdef->ptr_levels = type.ptr_levels;
-		if (fdef->ptr_levels) {
+		fdef->type.ptr_levels = type.ptr_levels;
+		fdef->type.tdef = tdef;
+		fdef->type.type = ft;
+
+		if (fdef->type.ptr_levels) {
 			fdef->size = sizeof(void*);
 		} else {
 			fdef->size = ft->size;
 		}
 	}
 
-	if (tell_me_tdef) {
-		*tell_me_tdef = tdef;
+	if (arg) {
+		arg->tdef = tdef;
+		arg->ptr_levels = type.ptr_levels;
+		arg->type = ft;
 	}
 	
 	if (type.ptr_levels) {
@@ -147,27 +150,32 @@ php_ffi_function *php_ffi_parser_register_func(struct php_ffi_def_context *ctx, 
 	memcpy(funcname, func_name.val, func_name.len);
 	funcname[func_name.len] = '\0';
 
-	func.ret_type = php_ffi_parser_resolve_type(ctx, return_type, NULL, &func.struct_return_type TSRMLS_CC);
+	php_ffi_parser_resolve_type(ctx, return_type, NULL, &func.ret_type TSRMLS_CC);
 	func.nargs = ctx->n_args;
 
 	func.lib = php_ffi_parser_resolve_lib(ctx, ctx->libname);
 
 	if (ctx->n_args) {
-		func.arg_types = safe_emalloc(ctx->n_args, sizeof(ffi_type *), 0);
+		func.cif_arg_types = safe_emalloc(ctx->n_args, sizeof(ffi_type *), 0);
+		func.arg_types = safe_emalloc(ctx->n_args, sizeof(struct php_ffi_typed_arg), 0);
 		func.arg_info = (zend_arg_info*)safe_emalloc(ctx->n_args, sizeof(zend_arg_info), 0);
 		memset(func.arg_info, 0, sizeof(zend_arg_info) * ctx->n_args);
 		for (i = 0; i < ctx->n_args; i++) {
-			func.arg_types[i] = php_ffi_parser_resolve_type(ctx, ctx->args[i].type, NULL, NULL TSRMLS_CC);
-			func.arg_info[i].allow_null = func.arg_types[i] == &ffi_type_pointer;
+			func.cif_arg_types[i] = php_ffi_parser_resolve_type(ctx, ctx->args[i].type, NULL, &func.arg_types[i] TSRMLS_CC);
+			func.arg_info[i].allow_null = func.cif_arg_types[i] == &ffi_type_pointer;
 		}
 	} else {
-		func.arg_types = NULL;
+		func.cif_arg_types = NULL;
 	}
-	switch (ffi_prep_cif(&func.cif, FFI_DEFAULT_ABI, ctx->n_args, func.ret_type, func.arg_types)) {
+	switch (ffi_prep_cif(&func.cif, FFI_DEFAULT_ABI, ctx->n_args,
+			   func.ret_type.ptr_levels ? &ffi_type_pointer : func.ret_type.type, func.cif_arg_types)) {
 		case FFI_OK:
 			zend_hash_update(&ctx->ctx->functions, funcname, func_name.len, &func, sizeof(func), (void**)&retfunc);
 			return retfunc;
 		default:
+			if (func.cif_arg_types) {
+				efree(func.cif_arg_types);
+			}
 			if (func.arg_types) {
 				efree(func.arg_types);
 			}

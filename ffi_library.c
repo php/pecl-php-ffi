@@ -254,6 +254,9 @@ void php_ffi_func_dtor(void *pDest)
 {
 	php_ffi_function *func = (php_ffi_function*)pDest;
 
+	if (func->cif_arg_types) {
+		efree(func->cif_arg_types);
+	}
 	if (func->arg_types) {
 		efree(func->arg_types);
 	}
@@ -395,7 +398,7 @@ static union _zend_function *php_ffi_method_get(zval *object, char *name, int le
 	f = emalloc(sizeof(zend_internal_function));
 	f->type = ZEND_OVERLOADED_FUNCTION_TEMPORARY;
 	f->num_args = func->nargs;
-	f->scope = obj->ce;
+	f->scope = php_ffi_context_class_entry;
 	f->fn_flags = 0;
 	f->function_name = estrdup(name);
 	f->arg_info = func->arg_info;
@@ -438,41 +441,24 @@ static int php_ffi_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS)
 	}
 
 	for (i = 0; i < nargs; i++) {
-		if (!php_ffi_zval_to_native(&values[i], &need_free[i], args[i], func->arg_types[i] TSRMLS_CC)) {
+		need_free[i] = 1; /* we want mem allocated if needed */
+		if (!php_ffi_zval_to_native(&values[i], &need_free[i], args[i], &func->arg_types[i] TSRMLS_CC)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not map parameter %d", i);
 		}
 	}
 
-	if (func->ret_type && func->ret_type->type != FFI_TYPE_VOID) {
-		return_value_buf = emalloc(func->ret_type->size);
+	if (func->ret_type.type && func->ret_type.type->type != FFI_TYPE_VOID) {
+		return_value_buf = emalloc(func->ret_type.type->size);
+	} else if (func->ret_type.ptr_levels) {
+		return_value_buf = emalloc(sizeof(void*));
+	} else if (func->ret_type.tdef) {
+		return_value_buf = emalloc(func->ret_type.tdef->total_size);
 	}
 /*	DebugBreak(); */
 	ffi_call(&func->cif, func->func_addr, return_value_buf, values);
 
 	/* pull back the return value */
-	if (func->struct_return_type) {
-		php_ffi_struct *str = ecalloc(1, sizeof(*obj));
-		
-		str->ce = php_ffi_struct_class_entry;
-		
-		if (func->ret_type->type == FFI_TYPE_POINTER) {
-			/* it's a pointer to a struct we know */
-			str->mem = *(char**)return_value_buf;
-		} else {
-			/* it's an instance of the struct itself */
-			str->mem = return_value_buf;
-			str->own_memory = 1;
-			return_value_buf = NULL;
-		}
-
-		str->tdef = func->struct_return_type;
-		str->memlen = str->tdef->total_size;
-
-		Z_TYPE_P(return_value) = IS_OBJECT;
-		Z_OBJ_HANDLE_P(return_value) = zend_objects_store_put(str,
-			   	php_ffi_struct_dtor, php_ffi_struct_object_clone TSRMLS_CC);
-		Z_OBJ_HT_P(return_value) = &php_ffi_struct_object_handlers;
-	} else if (!php_ffi_native_to_zval(return_value_buf, func->ret_type, return_value TSRMLS_CC)) {
+	if (return_value_buf && !php_ffi_native_to_zval(return_value_buf, &func->ret_type, return_value TSRMLS_CC)) {
 		/* TODO */
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not map return value");
 	}
@@ -511,8 +497,8 @@ static union _zend_function *php_ffi_constructor_get(zval *object TSRMLS_DC)
 
 	f = emalloc(sizeof(zend_internal_function));
 	f->type = ZEND_INTERNAL_FUNCTION;
-	f->function_name = obj->ce->name;
-	f->scope = obj->ce;
+	f->function_name = php_ffi_context_class_entry->name;
+	f->scope = php_ffi_context_class_entry;
 	f->arg_info = NULL;
 	f->num_args = 0;
 	f->fn_flags = 0;
@@ -522,10 +508,7 @@ static union _zend_function *php_ffi_constructor_get(zval *object TSRMLS_DC)
 
 static zend_class_entry *php_ffi_class_entry_get(zval *object TSRMLS_DC)
 {
-	php_ffi_context *obj;
-	obj = CTX_FETCH(object);
-
-	return obj->ce;
+	return php_ffi_context_class_entry;
 }
 
 static int php_ffi_class_name_get(zval *object, char **class_name, zend_uint *class_name_len, int parent TSRMLS_DC)
@@ -533,8 +516,8 @@ static int php_ffi_class_name_get(zval *object, char **class_name, zend_uint *cl
 	php_ffi_context *obj;
 	obj = CTX_FETCH(object);
 
-	*class_name = estrndup(obj->ce->name, obj->ce->name_length);
-	*class_name_len = obj->ce->name_length;
+	*class_name = estrndup(php_ffi_context_class_entry->name, php_ffi_context_class_entry->name_length);
+	*class_name_len = php_ffi_context_class_entry->name_length;
 
 	return 0;
 }
@@ -612,7 +595,6 @@ zend_object_value php_ffi_context_object_new(zend_class_entry *ce TSRMLS_DC)
 	obj = emalloc(sizeof(*obj));
 	memset(obj, 0, sizeof(*obj));
 
-	obj->ce = ce;
 	zend_hash_init(&obj->functions, 2, NULL, php_ffi_func_dtor, 0);
 	zend_hash_init(&obj->libraries, 2, NULL, php_ffi_lib_dtor, 0);
 	zend_hash_init(&obj->types, 2, NULL, php_ffi_type_dtor, 0);
