@@ -1,0 +1,21 @@
+$Id$
+
+Usage:
+
+First you need to declare the functions and types that you will be using:
+
+$interface_code = <<<EOD
+[lib='kernel32.dll'] DWORD GetTickCount();
+[lib='user32.dll'] int MessageBoxA(int handle, char *text, char *caption, int type);
+EOD;
+
+Then bind those into an ffi context:
+
+$ffi = new ffi($interface_code);
+
+And then use it:
+
+$count = $ffi->GetTickCount();
+echo $ffi->MessageBoxA(0, "The tick count is " . $count, "Ticky Ticky", 1);
+
+vim:tw=78:et

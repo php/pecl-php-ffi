@@ -1,0 +1,21 @@
+// $Id$
+// vim:ft=javascript
+
+ARG_WITH("ffi", "Foreign Function Interface Support", "no");
+
+if (PHP_FFI == "yes") {
+	EXTENSION("ffi", "php_ffi.c ffi_struct.c ffi_library.c ffi_parser.c", null,
+		"/D PHP_LIBFFI_VERSION=\"2.00-beta\" /I\"" + configure_module_dirname + "/libffi/include\"");
+	ADD_SOURCES(configure_module_dirname + "/libffi/src/x86", "ffi.c win32-msvc.c", "ffi");
+	ADD_SOURCES(configure_module_dirname + "/libffi/src", "debug.c prep_cif.c types.c raw_api.c java_raw_api.c", "ffi");
+
+	AC_DEFINE('HAVE_FFI', 1, 'Have FFI support');
+
+	copy_and_subst("libffi/include/ffi.h.in", "libffi/include/ffi.h", new Array(
+		new RegExp("@TARGET@", "g"), "X86_WIN32",
+		new RegExp("@VERSION@", "g"), "2.00-beta"
+	));
+
+	MFO.WriteLine(configure_module_dirname + "\\ffi_parser.c: " + configure_module_dirname + "\\ffi_parser.y");
+	MFO.WriteLine("\t-$(LEMON) " + configure_module_dirname + "\\ffi_parser.y");
+}
