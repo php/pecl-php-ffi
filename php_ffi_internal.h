@@ -101,11 +101,6 @@ typedef union {
 	php_ffi_function *func;
 } php_ffi_tokentype;
 
-void *php_ffi_parserAlloc(void *(*mallocProc)(size_t));
-void php_ffi_parserFree(
-  void *p,                    /* The parser to be deleted */
-  void (*freeProc)(void*)     /* Function used to reclaim memory */
-);
 const char *php_ffi_parserTokenName(int tokenType);
 const char *php_ffi_get_token_string(int major, php_ffi_tokentype t);
 

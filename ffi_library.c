@@ -49,6 +49,7 @@ static struct {
 #define MKKEYWORD(label, value)	{ label, sizeof(label)-1, value, 0 }
 	MKKEYWORD("struct", PHP_FFI_TOK_STRUCT),
 	MKKEYWORD("typedef", PHP_FFI_TOK_TYPEDEF),
+	MKKEYWORD("callback", PHP_FFI_TOK_CALLBACK),
 #define MKTYPETOK(label, value)	{ label, sizeof(label)-1, PHP_FFI_TOK_INTRINSIC, value }
 	MKTYPETOK("void", FFI_TYPE_VOID),
 	MKTYPETOK("int", FFI_TYPE_INT ),
@@ -94,6 +95,12 @@ static struct {
 	
 	{ NULL, 0, 0 }
 };
+
+void *php_ffi_parserAlloc(void *(*mallocProc)(size_t));
+void php_ffi_parserFree(
+  void *p,                    /* The parser to be deleted */
+  void (*freeProc)(void*)     /* Function used to reclaim memory */
+);
 
 static int parse_defs(php_ffi_context *the_ctx, char *proto_text)
 {
@@ -446,6 +453,7 @@ static int php_ffi_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS)
 		need_free = (int*)safe_emalloc(sizeof(int), nargs, 0);
 	}
 
+/*	DebugBreak(); */
 	for (i = 0; i < nargs; i++) {
 		need_free[i] = 1; /* we want mem allocated if needed */
 		if (!php_ffi_zval_to_native(&values[i], &need_free[i], args[i], &func->arg_types[i] TSRMLS_CC)) {
@@ -453,19 +461,19 @@ static int php_ffi_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS)
 		}
 	}
 
-	if (func->ret_type.type && func->ret_type.type->type != FFI_TYPE_VOID) {
-		return_value_buf = emalloc(func->ret_type.type->size);
-	} else if (func->ret_type.ptr_levels) {
-		return_value_buf = emalloc(sizeof(void*));
-	} else if (func->ret_type.tdef) {
-		return_value_buf = emalloc(func->ret_type.tdef->total_size);
+	if (return_value_used) {
+		if (func->ret_type.type && func->ret_type.type->type != FFI_TYPE_VOID) {
+			return_value_buf = emalloc(func->ret_type.type->size);
+		} else if (func->ret_type.ptr_levels) {
+			return_value_buf = emalloc(sizeof(void*));
+		} else if (func->ret_type.tdef) {
+			return_value_buf = emalloc(func->ret_type.tdef->total_size);
+		}
 	}
-/*	DebugBreak(); */
 	ffi_call(&func->cif, func->func_addr, return_value_buf, values);
 
 	/* pull back the return value */
 	if (return_value_buf && !php_ffi_native_to_zval(return_value_buf, &func->ret_type, return_value TSRMLS_CC)) {
-		/* TODO */
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not map return value");
 	}
 

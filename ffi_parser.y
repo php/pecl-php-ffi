@@ -95,17 +95,35 @@ top_list ::= top_item top_list.
 top_list ::= top_item.
 
 top_item ::= func_proto_with_attributes.
+top_item ::= func_proto.
 top_item ::= type_def.
+top_item ::= callback_def.
 
-arg_type(R) ::= arg_type(T) ASTERISK.	{ R = T; R.type.ptr_levels++; }
-arg_type(R) ::= INTRINSIC(N).			{ R = N; R.type.ptr_levels = 0;	}
-arg_type(R) ::= STRUCT IDENT(I).		{
+optional_asterisk_list(OL) ::= .					{ OL.type.ptr_levels = 0; }
+optional_asterisk_list(OL) ::= asterisk_list(AL).	{ OL = AL; }
+
+asterisk_list(AL) ::= ASTERISK.						{ AL.type.ptr_levels = 1; }
+asterisk_list(AL) ::= asterisk_list(L) ASTERISK.	{ AL = L; AL.type.ptr_levels++; }
+
+arg_type(R) ::= INTRINSIC(N) optional_asterisk_list(OAL).	  { R = N; R.type.ptr_levels = OAL.type.ptr_levels; }
+arg_type(R) ::= STRUCT IDENT(I) optional_asterisk_list(OAL).  {
    	R.type.intrinsic_type = FFI_TYPE_STRUCT;
 	R.type.struct_name = I.ident;
-   	R.type.ptr_levels = 0;
+   	R.type.ptr_levels = OAL.type.ptr_levels;
 }
 
-arg_type(R) ::= IDENT(TNAME).			{ /* TODO */ }
+arg_type(R) ::= IDENT(TNAME).			{
+	CTX_TSRMLS_FETCH();
+	/* TODO: lookup ident (including callback types) */
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unrecognized type name `%s'", get_ident_string(TNAME.ident));	
+}
+
+/* define a callback function type; once defined, the CBNAME can be used
+ * just like any other type */
+callback_def ::= CALLBACK arg_type(T) IDENT(CBNAME) LPAREN arg_list RPAREN SEMI. {
+	CTX_TSRMLS_FETCH();
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "callback support not complete");	
+}
 
 func_attribute_list ::= func_attribute COMMA func_attribute_list.
 func_attribute_list ::= func_attribute.
@@ -119,9 +137,7 @@ func_attribute ::= IDENT(ATTNAME) EQUALS STRING(VALUE). {
 	}
 }
 
-optional_func_attribute_list ::= LSQUARE func_attribute_list RSQUARE.
-
-func_proto_with_attributes ::= optional_func_attribute_list func_proto(FP).
+func_proto_with_attributes ::= LSQUARE func_attribute_list RSQUARE func_proto(FP).
 
 func_proto(FP) ::= arg_type(RET) IDENT(NAME) LPAREN arg_list RPAREN SEMI. {
 	FP.func = php_ffi_parser_register_func(ctx, RET.type, NAME.ident);
