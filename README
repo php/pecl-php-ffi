@@ -18,4 +18,13 @@ And then use it:
 $count = $ffi->GetTickCount();
 echo $ffi->MessageBoxA(0, "The tick count is " . $count, "Ticky Ticky", 1);
 
+Tips:
+
+For functions that expect to copy/store memory into a buffer, use
+str_repeat() to "allocate" room for that buffer.
+
+Until structure support is implemented in ffi itself, you can use
+pack()/unpack() to emulate structures.
+
+
 vim:tw=78:et
