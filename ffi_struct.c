@@ -178,7 +178,6 @@ static zval *php_ffi_struct_object_get(zval *property TSRMLS_DC)
 
 static int php_ffi_struct_property_exists(zval *object, zval *member, int check_empty TSRMLS_DC)
 {
-	zval *return_value;
 	php_ffi_struct *obj;
 	int i;
 
@@ -217,12 +216,9 @@ static HashTable *php_ffi_struct_properties_get(zval *object TSRMLS_DC)
 
 static union _zend_function *php_ffi_struct_method_get(zval *object, char *name, int len TSRMLS_DC)
 {
-	zend_internal_function *f;
-	php_ffi_struct *obj;
-	php_ffi_function *func;
-	
-	obj = STRUCT_FETCH(object);
-
+#if 0
+	php_ffi_struct *obj = STRUCT_FETCH(object);
+#endif
 	/* TODO: worry about pointers to functions? */
 	
 	return NULL;
@@ -344,7 +340,7 @@ zend_object_value php_ffi_struct_object_new(zend_class_entry *ce TSRMLS_DC)
 
 	obj = ecalloc(1, sizeof(*obj));
 	
-	retval.handle = zend_objects_store_put(obj, php_ffi_struct_dtor, php_ffi_struct_object_clone TSRMLS_CC);
+	retval.handle = zend_objects_store_put(obj, php_ffi_struct_dtor, NULL, php_ffi_struct_object_clone TSRMLS_CC);
 	retval.handlers = &php_ffi_struct_object_handlers;
 
 	return retval;
@@ -489,7 +485,7 @@ int php_ffi_native_to_zval(void *mem, struct php_ffi_typed_arg *argtype, zval *v
 
 			Z_TYPE_P(val) = IS_OBJECT;
 			Z_OBJ_HANDLE_P(val) = zend_objects_store_put(str,
-					php_ffi_struct_dtor, php_ffi_struct_object_clone TSRMLS_CC);
+					php_ffi_struct_dtor, NULL, php_ffi_struct_object_clone TSRMLS_CC);
 			Z_OBJ_HT_P(val) = &php_ffi_struct_object_handlers;
 			return 1;
 		}

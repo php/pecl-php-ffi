@@ -637,7 +637,7 @@ zend_object_value php_ffi_context_object_new(zend_class_entry *ce TSRMLS_DC)
 	zend_hash_init(&obj->types, 2, NULL, php_ffi_type_dtor, 0);
 	obj->ce = ce;
 	
-	retval.handle = zend_objects_store_put(obj, php_ffi_context_dtor, php_ffi_object_clone TSRMLS_CC);
+	retval.handle = zend_objects_store_put(obj, php_ffi_context_dtor, NULL, php_ffi_object_clone TSRMLS_CC);
 	retval.handlers = &php_ffi_object_handlers;
 
 	return retval;
