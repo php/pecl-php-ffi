@@ -115,7 +115,7 @@ if test "$PHP_FFI" != "no"; then
 	fi
 
 
-  PHP_NEW_EXTENSION(ffi, php_ffi.c ffi_struct.c ffi_library.c ffi_parser.c $ffi_sources libffi/src/debug.c libffi/src/prep_cif.c libffi/src/types.c libffi/src/raw_api.c libffi/src/java_raw_api.c, $ext_shared,,-I@ext_srcdir@/libffi/include)
+  PHP_NEW_EXTENSION(ffi, php_ffi.c ffi_struct.c ffi_library.c ffi_parser_util.c ffi_parser.c $ffi_sources libffi/src/debug.c libffi/src/prep_cif.c libffi/src/types.c libffi/src/raw_api.c libffi/src/java_raw_api.c, $ext_shared,,-I@ext_srcdir@/libffi/include)
   PHP_ADD_BUILD_DIR($ext_builddir/libffi/src/$TARGETDIR)
   PHP_ADD_BUILD_DIR($ext_builddir/libffi)
   PHP_ADD_BUILD_DIR($ext_builddir/libffi/src)

@@ -34,6 +34,9 @@ ZEND_DECLARE_MODULE_GLOBALS(ffi)
 /* True global resources - no need for thread safety here */
 static int le_ffi;
 
+zend_class_entry *php_ffi_struct_class_entry = NULL,
+	*php_ffi_context_class_entry = NULL;
+
 /* {{{ ffi_functions[]
  *
  * Every user visible function must have an entry in ffi_functions[].
@@ -92,11 +95,11 @@ PHP_MINIT_FUNCTION(ffi)
 
 	INIT_CLASS_ENTRY(ce, "ffi", NULL);
 	ce.create_object = php_ffi_context_object_new;
-	zend_register_internal_class(&ce TSRMLS_CC);
+	php_ffi_context_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ffi_struct", NULL);
 	ce.create_object = php_ffi_struct_object_new;
-	zend_register_internal_class(&ce TSRMLS_CC);
+	php_ffi_struct_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
 		
 	/* If you have INI entries, uncomment these lines 
 	ZEND_INIT_MODULE_GLOBALS(ffi, php_ffi_init_globals, NULL);

@@ -32,6 +32,7 @@ typedef struct {
 	int nargs;
 	ffi_type **arg_types;
 	ffi_type *ret_type;
+	struct _php_ffi_type_def *struct_return_type;
 	zend_arg_info *arg_info;
 	php_ffi_library *lib;
 } php_ffi_function;
@@ -54,7 +55,7 @@ typedef	struct {
 	php_ffi_ident struct_name;
 } php_ffi_type_ref;
 
-typedef struct {
+typedef struct _php_ffi_type_def {
 	int nfields;
 	char *struct_name;
 	ffi_type ffi_t;
@@ -136,3 +137,22 @@ const char *php_ffi_get_token_string(int major, php_ffi_tokentype t);
 
 int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, ffi_type *tdef TSRMLS_DC);
 int php_ffi_native_to_zval(void *mem, ffi_type *tdef, zval *val TSRMLS_DC);
+
+#ifdef ZTS
+# define CTX_TSRMLS_FETCH()	void *tsrm_ls = ctx->tsrm_ls
+#else
+# define CTX_TSRMLS_FETCH()
+#endif
+
+#define IDENT_EQUALS(str, v)	(v.len == sizeof(str)-1 && memcmp(str, v.val, v.len) == 0)
+
+void php_ffi_parser_add_arg(struct php_ffi_def_context *ctx, php_ffi_type_ref type, php_ffi_ident ident);
+ffi_type *php_ffi_parser_resolve_type(struct php_ffi_def_context *ctx, php_ffi_type_ref type,
+	struct php_ffi_field_def *fdef, php_ffi_type_def **tell_me_tdef TSRMLS_DC);
+php_ffi_library *php_ffi_parser_resolve_lib(struct php_ffi_def_context *ctx, php_ffi_ident libname);
+php_ffi_type_def *php_ffi_parser_register_type(struct php_ffi_def_context *ctx, php_ffi_ident struct_name);
+php_ffi_function *php_ffi_parser_register_func(struct php_ffi_def_context *ctx, php_ffi_type_ref return_type, php_ffi_ident func_name);
+
+void php_ffi_struct_dtor(void *object, zend_object_handle handle TSRMLS_DC);
+void php_ffi_struct_object_clone(void *object, void **clone_ptr TSRMLS_DC);
+extern zend_object_handlers php_ffi_struct_object_handlers;

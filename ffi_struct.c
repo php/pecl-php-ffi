@@ -30,7 +30,6 @@
 
 #include "php_ffi_internal.h"
 
-
 static PHP_FUNCTION(php_ffi_struct_create_instance)
 {
 	zval *ctxobj;
@@ -56,7 +55,6 @@ static PHP_FUNCTION(php_ffi_struct_create_instance)
 		ZVAL_NULL(object);
 		return;
 	}
-
 	obj->memlen = obj->tdef->total_size;
 	obj->mem = ecalloc(1, obj->memlen);
 	obj->own_memory = 1;
@@ -85,7 +83,13 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool 
 	/* look for the property */
 	for (i = 0; i < obj->tdef->nfields; i++) {
 		if (strcmp(Z_STRVAL_P(member), obj->tdef->field_names[i]) == 0) {
-			/* TODO: read and convert the memory to a zval */
+			/* figure out address of this member */
+			char *addr = obj->mem + obj->tdef->field_types[i].offset;
+			
+			/* TODO: handle the case where ptr_levels is non zero! */
+			if (!php_ffi_native_to_zval(addr, obj->tdef->ffi_t.elements[i], return_value TSRMLS_CC)) {
+				PHP_FFI_THROW("could not map property!");
+			}
 			return return_value;
 		}
 	}
@@ -262,7 +266,7 @@ static int php_ffi_struct_object_cast(zval *readobj, zval *writeobj, int type, i
 	return FAILURE;
 }
 
-static zend_object_handlers php_ffi_struct_object_handlers = {
+zend_object_handlers php_ffi_struct_object_handlers = {
 	ZEND_OBJECTS_STORE_HANDLERS,
 	php_ffi_struct_property_read,
 	php_ffi_struct_property_write,
@@ -336,11 +340,18 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, ffi_type *tdef
 	switch (tdef->type) {
 		case FFI_TYPE_VOID:		*mem = NULL; return 1;
 		case FFI_TYPE_POINTER:
-			/* TODO: should verify that we are really looking for a string */
 			if (Z_TYPE_P(val) == IS_NULL) {
 				*mem = emalloc(sizeof(void*));
 				*(void**)*mem = NULL;
 				*need_free = 1;
+			} else if (Z_TYPE_P(val) == IS_OBJECT) {
+				if (Z_OBJCE_P(val) == php_ffi_struct_class_entry) {
+					php_ffi_struct *str = STRUCT_FETCH(val);
+					*mem = &str->mem;
+					return 1;
+				} else {
+					return 0;
+				}
 			} else {
 				convert_to_string(val);
 				*mem = &Z_STRVAL_P(val);
@@ -410,7 +421,13 @@ int php_ffi_native_to_zval(void *mem, ffi_type *tdef, zval *val TSRMLS_DC)
 	} else if (tdef == &ffi_type_double) {
 		ZVAL_DOUBLE(val, *(double*)mem);
 		return 1;
+	} else if (tdef == &ffi_type_pointer) {
+		/* HACK! */
+		ZVAL_STRING(val, *(char**)mem, 1);
+		return 1;
 	}
+
+	printf("native to zval: tdef=%p\n", tdef);
 	return 0;
 }
 

@@ -450,7 +450,29 @@ static int php_ffi_call_method(char *method, INTERNAL_FUNCTION_PARAMETERS)
 	ffi_call(&func->cif, func->func_addr, return_value_buf, values);
 
 	/* pull back the return value */
-	if (!php_ffi_native_to_zval(return_value_buf, func->ret_type, return_value TSRMLS_CC)) {
+	if (func->struct_return_type) {
+		php_ffi_struct *str = ecalloc(1, sizeof(*obj));
+		
+		str->ce = php_ffi_struct_class_entry;
+		
+		if (func->ret_type->type == FFI_TYPE_POINTER) {
+			/* it's a pointer to a struct we know */
+			str->mem = *(char**)return_value_buf;
+		} else {
+			/* it's an instance of the struct itself */
+			str->mem = return_value_buf;
+			str->own_memory = 1;
+			return_value_buf = NULL;
+		}
+
+		str->tdef = func->struct_return_type;
+		str->memlen = str->tdef->total_size;
+
+		Z_TYPE_P(return_value) = IS_OBJECT;
+		Z_OBJ_HANDLE_P(return_value) = zend_objects_store_put(str,
+			   	php_ffi_struct_dtor, php_ffi_struct_object_clone TSRMLS_CC);
+		Z_OBJ_HT_P(return_value) = &php_ffi_struct_object_handlers;
+	} else if (!php_ffi_native_to_zval(return_value_buf, func->ret_type, return_value TSRMLS_CC)) {
 		/* TODO */
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not map return value");
 	}
