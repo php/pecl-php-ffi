@@ -1,4 +1,8 @@
 <?php
+	if (!extension_loaded('ffi')) {
+		die("Please install FFI extension.\n");
+	}
+
 	/* FFI implementation of ext/ctype */
 
 class ctype extends ffi
@@ -47,5 +51,5 @@ EOD
 }
 
 	$ctype = new ctype();
-	var_dump($ctype->ctype_isdigit(7343));
+	var_dump($ctype->ctype_isdigit("7343"));
 ?>
