@@ -15,8 +15,8 @@
  <license>PHP</license>
  <release>
   <state>alpha</state>
-  <version>0.1</version>
-  <date>2004-01-11</date>
+  <version>0.2</version>
+  <date>2004-??-??</date>
   <notes>Initial release</notes>
   <filelist>
 
@@ -121,11 +121,11 @@
    <file role="src" name="win32.S"/>
   </dir>
  </dir>
+</dir>
 
- <dir name="tests" role="test">
-  <file name="001.phpt"/>
- </dir>
-
+<dir name="tests" role="test">
+ <file name="001.phpt"/>
+</dir>
   </filelist>
   <deps>
    <dep type="php" rel="ge" version="5" />

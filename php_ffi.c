@@ -54,10 +54,10 @@ zend_module_entry ffi_module_entry = {
 	ffi_functions,
 	PHP_MINIT(ffi),
 	PHP_MSHUTDOWN(ffi),
-	PHP_RINIT(ffi),		/* Replace with NULL if there's nothing to do at request start */
-	PHP_RSHUTDOWN(ffi),	/* Replace with NULL if there's nothing to do at request end */
+	PHP_RINIT(ffi),
+	PHP_RSHUTDOWN(ffi),
 	PHP_MINFO(ffi),
-	"0.1", /* Replace with version number for your extension */
+	"0.2",
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
