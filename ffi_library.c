@@ -353,11 +353,11 @@ static php_ffi_function *bind_func(php_ffi_context *ctx, char *name, int len TSR
 	}
 
 	if (func->func_addr == NULL) {
-#if defined(HAVE_LIBDL)
+#if HAVE_LIBDL
 # define php_ffi_get_sym(handle, name)	dlsym(handle, name)
 #elif defined(HAVE_MACH_O_DYLD_H)
 # define php_ffi_get_sym(handle, name)	zend_mh_bundle_symbol(handle, name)
-#elif define(PHP_WIN32)
+#elif defined(PHP_WIN32)
 # define php_ffi_get_sym(handle, name)	GetProcAddress(handle, name)
 #else
 # error You lose
