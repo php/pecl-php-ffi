@@ -421,6 +421,14 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 		convert_to_double(val);
 		*mem = &Z_DVAL_P(val);
 		return 1;
+	} else if (argtype->type == &ffi_type_float) {
+		convert_to_double(val);
+		if (want_alloc) {
+			*mem = emalloc(sizeof(float));
+			*need_free = 1;
+		}
+		*(float*)mem = (float)Z_DVAL_P(val);
+		return 1;
 	} else if (argtype->type == &ffi_type_sint64 || argtype->type == &ffi_type_uint64) {
 		if (want_alloc) {
 			*mem = emalloc(sizeof(SINT64));
@@ -482,6 +490,9 @@ int php_ffi_native_to_zval(void *mem, struct php_ffi_typed_arg *argtype, zval *v
 		return 1;
 	} else if (argtype->type == &ffi_type_double) {
 		ZVAL_DOUBLE(val, *(double*)mem);
+		return 1;
+	} else if (argtype->type == &ffi_type_float) {
+		ZVAL_DOUBLE(val, *(float*)mem);
 		return 1;
 	} else if (argtype->type == &ffi_type_sint64 || argtype->type == &ffi_type_uint64) {
 		char intbuf[128];
