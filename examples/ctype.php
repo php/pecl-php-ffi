@@ -24,8 +24,10 @@ class ctype extends ffi
 
 	function __construct()
 	{
+		$lib = strncasecmp(PHP_OS, 'win', 3) ? 'libc.so.6' : 'msvcrt.dll';
+	
 		parent::__construct(<<<EOD
-[lib='libc.so.6']
+[lib='{$lib}']
 	int isalnum (int c);
 	int isalpha (int c);
 	int isascii (int c);
@@ -45,5 +47,5 @@ EOD
 }
 
 	$ctype = new ctype();
-	var_dump($ctype->ctype_isdigit(7343.32));
+	var_dump($ctype->ctype_isdigit(7343));
 ?>
