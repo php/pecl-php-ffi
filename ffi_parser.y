@@ -40,8 +40,6 @@
 
 #define IDENT_EQUALS(str, v)	(v.len == sizeof(str)-1 && memcmp(str, v.val, v.len) == 0)
 
-static char *yyTokenName[];
-
 static const char *get_ident_string(php_ffi_ident id)
 {
 	static char idbuf[256];
@@ -88,7 +86,11 @@ const char *php_ffi_get_token_string(int major, php_ffi_tokentype t)
 			sprintf(tokbuf, "identifier: %s", get_ident_string(t.ident));
 			break;
 		default:
-			sprintf(tokbuf, "token: %s", yyTokenName[major]);
+#if ZEND_DEBUG
+			sprintf(tokbuf, "token: %s", php_ffi_parserTokenName(major));
+#else
+			sprintf(tokbuf, "token: ???");
+#endif
 	}
 	return tokbuf;
 }
