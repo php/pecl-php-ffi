@@ -1,27 +1,10 @@
 /* Driver template for the LEMON parser generator.
-** Copyright 1991-1995 by D. Richard Hipp.
-**
-** This library is free software; you can redistribute it and/or
-** modify it under the terms of the GNU Library General Public
-** License as published by the Free Software Foundation; either
-** version 2 of the License, or (at your option) any later version.
-** 
-** This library is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-** Library General Public License for more details.
-** 
-** You should have received a copy of the GNU Library General Public
-** License along with this library; if not, write to the
-** Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA  02111-1307, USA.
-**
-** Modified 1997 to make it suitable for use with makeheaders.
+** The author disclaims copyright to this source code.
 */
 /* First off, code is include which follows the "include" declaration
 ** in the input file. */
 #include <stdio.h>
-#line 7 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 7 "..\\pecl\\ffi\\ffi_parser.y"
 
 /*
    +----------------------------------------------------------------------+
@@ -57,8 +40,6 @@
 #endif
 
 #define IDENT_EQUALS(str, v)	(v.len == sizeof(str)-1 && memcmp(str, v.val, v.len) == 0)
-
-static char *yyTokenName[];
 
 static const char *get_ident_string(php_ffi_ident id)
 {
@@ -106,7 +87,11 @@ const char *php_ffi_get_token_string(int major, php_ffi_tokentype t)
 			sprintf(tokbuf, "identifier: %s", get_ident_string(t.ident));
 			break;
 		default:
-			sprintf(tokbuf, "token: %s", yyTokenName[major]);
+#if ZEND_DEBUG
+			sprintf(tokbuf, "token: %s", php_ffi_parserTokenName(major));
+#else
+			sprintf(tokbuf, "token: ???");
+#endif
 	}
 	return tokbuf;
 }
@@ -266,7 +251,7 @@ php_ffi_function *register_func(struct php_ffi_def_context *ctx, php_ffi_type_re
 
 
 
-#line 268 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 255 "..\\pecl\\ffi\\ffi_parser.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -292,6 +277,9 @@ php_ffi_function *register_func(struct php_ffi_def_context *ctx, php_ffi_type_re
 **                       to no legal terminal or nonterminal number.  This
 **                       number is used to fill in empty slots of the hash 
 **                       table.
+**    YYFALLBACK         If defined, this indicates that one or more tokens
+**                       have fall-back values which should be used if the
+**                       original value of the token will not parse.
 **    YYACTIONTYPE       is the data type used for storing terminal
 **                       and nonterminal numbers.  "unsigned char" is
 **                       used if there are fewer than 250 rules and
@@ -303,10 +291,10 @@ php_ffi_function *register_func(struct php_ffi_def_context *ctx, php_ffi_type_re
 **                       which is php_ffi_parserTOKENTYPE.  The entry in the union
 **                       for base tokens is called "yy0".
 **    YYSTACKDEPTH       is the maximum depth of the parser's stack.
-**    php_ffi_parserARGDECL       is a declaration of a 3rd argument to the
-**                       parser, or null if there is no extra argument.
-**    php_ffi_parserKRARGDECL     A version of php_ffi_parserARGDECL for K&R C.
-**    php_ffi_parserANSIARGDECL   A version of php_ffi_parserARGDECL for ANSI C.
+**    php_ffi_parserARG_SDECL     A static variable declaration for the %extra_argument
+**    php_ffi_parserARG_PDECL     A parameter declaration for the %extra_argument
+**    php_ffi_parserARG_STORE     Code to store %extra_argument into yypParser
+**    php_ffi_parserARG_FETCH     Code to extract %extra_argument from yypParser
 **    YYNSTATE           the combined number of states.
 **    YYNRULE            the number of rules in the grammar
 **    YYERRORSYMBOL      is the code number of the error symbol.  If not
@@ -322,9 +310,10 @@ typedef union {
   int yy63;
 } YYMINORTYPE;
 #define YYSTACKDEPTH 100
-#define php_ffi_parserARGDECL ,ctx 
-#define php_ffi_parserXARGDECL  struct php_ffi_def_context *ctx ;
-#define php_ffi_parserANSIARGDECL , struct php_ffi_def_context *ctx 
+#define php_ffi_parserARG_SDECL  struct php_ffi_def_context *ctx ;
+#define php_ffi_parserARG_PDECL , struct php_ffi_def_context *ctx 
+#define php_ffi_parserARG_FETCH  struct php_ffi_def_context *ctx  = yypParser->ctx 
+#define php_ffi_parserARG_STORE yypParser->ctx  = ctx 
 #define YYNSTATE 48
 #define YYNRULE 24
 #define YYERRORSYMBOL 19
@@ -332,276 +321,113 @@ typedef union {
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
-/* Next is the action table.  Each entry in this table contains
-**
-**  +  An integer which is the number representing the look-ahead
-**     token
-**
-**  +  An integer indicating what action to take.  Number (N) between
-**     0 and YYNSTATE-1 mean shift the look-ahead and go to state N.
-**     Numbers between YYNSTATE and YYNSTATE+YYNRULE-1 mean reduce by
-**     rule N-YYNSTATE.  Number YYNSTATE+YYNRULE means that a syntax
-**     error has occurred.  Number YYNSTATE+YYNRULE+1 means the parser
-**     accepts its input.
-**
-**  +  A pointer to the next entry with the same hash value.
-**
-** The action table is really a series of hash tables.  Each hash
-** table contains a number of entries which is a power of two.  The
-** "state" table (which follows) contains information about the starting
-** point and size of each hash table.
-*/
-struct yyActionEntry {
-  YYCODETYPE   lookahead;   /* The value of the look-ahead token */
-  YYACTIONTYPE action;      /* Action to take for this look-ahead */
-  struct yyActionEntry *next; /* Next look-ahead with the same hash, or NULL */
-};
-static struct yyActionEntry yyActionTable[] = {
-/* State 0 */
-  {  14,  37, 0                    }, /*                 STRUCT shift  37 */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {   8,   6, 0                    }, /*                LSQUARE shift  6 */
-  {  25,   4, 0                    }, /* func_proto_with_attributes shift  4 */
-  {  26,  15, 0                    }, /* optional_func_attribute_list shift  15 */
-  {  27,   2, 0                    }, /*               top_item shift  2 */
-  {  28,  73, 0                    }, /*              top_level accept */
-  {  29,   1, 0                    }, /*               top_list shift  1 */
-  {  30,   5, &yyActionTable[   0] }, /*               type_def shift  5 */
-  {  15,  33, 0                    }, /*                TYPEDEF shift  33 */
-/* State 1 */
-  {   0,  48, 0                    }, /*                      $ reduce 0 */
-/* State 2 */
-  {   0,  50, 0                    }, /*                      $ reduce 2 */
-  {  14,  37, 0                    }, /*                 STRUCT shift  37 */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {   8,   6, 0                    }, /*                LSQUARE shift  6 */
-  {  25,   4, 0                    }, /* func_proto_with_attributes shift  4 */
-  {  26,  15, 0                    }, /* optional_func_attribute_list shift  15 */
-  {  27,   2, 0                    }, /*               top_item shift  2 */
-  {YYNOCODE,0,0}, /* Unused */
-  {  29,   3, 0                    }, /*               top_list shift  3 */
-  {  30,   5, &yyActionTable[  18] }, /*               type_def shift  5 */
-  {  15,  33, 0                    }, /*                TYPEDEF shift  33 */
-/* State 3 */
-  {   0,  49, 0                    }, /*                      $ reduce 1 */
-/* State 4 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 5 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 6 */
-  {   4,  10, 0                    }, /*                  IDENT shift  10 */
-  {YYNOCODE,0,0}, /* Unused */
-  {  22,   7, 0                    }, /*         func_attribute shift  7 */
-  {  23,  13, 0                    }, /*    func_attribute_list shift  13 */
-/* State 7 */
-  {   2,   8, 0                    }, /*                  COMMA shift  8 */
-  {  11,  58, 0                    }, /*                RSQUARE reduce 10 */
-/* State 8 */
-  {   4,  10, 0                    }, /*                  IDENT shift  10 */
-  {YYNOCODE,0,0}, /* Unused */
-  {  22,   7, 0                    }, /*         func_attribute shift  7 */
-  {  23,   9, 0                    }, /*    func_attribute_list shift  9 */
-/* State 9 */
-  {  11,  57, 0                    }, /*                RSQUARE reduce 9 */
-/* State 10 */
-  {   3,  11, 0                    }, /*                 EQUALS shift  11 */
-/* State 11 */
-  {  13,  12, 0                    }, /*                 STRING shift  12 */
-/* State 12 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 13 */
-  {  11,  14, 0                    }, /*                RSQUARE shift  14 */
-/* State 14 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 15 */
-  {  24,  32, 0                    }, /*             func_proto shift  32 */
-  {  17,  16, 0                    }, /*               arg_type shift  16 */
-  {YYNOCODE,0,0}, /* Unused */
-  {YYNOCODE,0,0}, /* Unused */
-  {   4,  25, 0                    }, /*                  IDENT shift  25 */
-  {   5,  22, 0                    }, /*              INTRINSIC shift  22 */
-  {  14,  23, 0                    }, /*                 STRUCT shift  23 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 16 */
-  {   4,  18, 0                    }, /*                  IDENT shift  18 */
-  {   1,  17, 0                    }, /*               ASTERISK shift  17 */
-/* State 17 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 18 */
-  {   7,  19, 0                    }, /*                 LPAREN shift  19 */
-/* State 19 */
-  {  16,  26, 0                    }, /*               arg_list shift  26 */
-  {  17,  20, 0                    }, /*               arg_type shift  20 */
-  {  18,  29, &yyActionTable[  67] }, /*               argument shift  29 */
-  {  10,  70, 0                    }, /*                 RPAREN reduce 22 */
-  {   4,  25, 0                    }, /*                  IDENT shift  25 */
-  {   5,  22, 0                    }, /*              INTRINSIC shift  22 */
-  {  14,  23, 0                    }, /*                 STRUCT shift  23 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 20 */
-  {   4,  21, 0                    }, /*                  IDENT shift  21 */
-  {   1,  17, 0                    }, /*               ASTERISK shift  17 */
-/* State 21 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 22 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 23 */
-  {   4,  24, 0                    }, /*                  IDENT shift  24 */
-/* State 24 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 25 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 26 */
-  {  10,  27, 0                    }, /*                 RPAREN shift  27 */
-/* State 27 */
-  {  12,  28, 0                    }, /*                   SEMI shift  28 */
-/* State 28 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 29 */
-  {  10,  69, &yyActionTable[  83] }, /*                 RPAREN reduce 21 */
-  {   2,  30, 0                    }, /*                  COMMA shift  30 */
-/* State 30 */
-  {  16,  31, 0                    }, /*               arg_list shift  31 */
-  {  17,  20, 0                    }, /*               arg_type shift  20 */
-  {  18,  29, &yyActionTable[  87] }, /*               argument shift  29 */
-  {  10,  70, 0                    }, /*                 RPAREN reduce 22 */
-  {   4,  25, 0                    }, /*                  IDENT shift  25 */
-  {   5,  22, 0                    }, /*              INTRINSIC shift  22 */
-  {  14,  23, 0                    }, /*                 STRUCT shift  23 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 31 */
-  {  10,  68, 0                    }, /*                 RPAREN reduce 20 */
-/* State 32 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 33 */
-  {   4,  25, 0                    }, /*                  IDENT shift  25 */
-  {  17,  34, &yyActionTable[  97] }, /*               arg_type shift  34 */
-  {  14,  23, 0                    }, /*                 STRUCT shift  23 */
-  {   5,  22, 0                    }, /*              INTRINSIC shift  22 */
-/* State 34 */
-  {   4,  35, 0                    }, /*                  IDENT shift  35 */
-  {   1,  17, 0                    }, /*               ASTERISK shift  17 */
-/* State 35 */
-  {  12,  36, 0                    }, /*                   SEMI shift  36 */
-/* State 36 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 37 */
-  {   4,  38, 0                    }, /*                  IDENT shift  38 */
-/* State 38 */
-  {   6,  39, 0                    }, /*                 LBRACE shift  39 */
-/* State 39 */
-  {   4,  25, 0                    }, /*                  IDENT shift  25 */
-  {  17,  40, 0                    }, /*               arg_type shift  40 */
-  {   5,  22, 0                    }, /*              INTRINSIC shift  22 */
-  {YYNOCODE,0,0}, /* Unused */
-  {  20,  46, &yyActionTable[ 104] }, /*              field_def shift  46 */
-  {  21,  43, &yyActionTable[ 106] }, /*             field_list shift  43 */
-  {  14,  23, 0                    }, /*                 STRUCT shift  23 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 40 */
-  {   4,  41, 0                    }, /*                  IDENT shift  41 */
-  {   1,  17, 0                    }, /*               ASTERISK shift  17 */
-/* State 41 */
-  {  12,  42, 0                    }, /*                   SEMI shift  42 */
-/* State 42 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 43 */
-  {   9,  44, 0                    }, /*                 RBRACE shift  44 */
-/* State 44 */
-  {  12,  45, 0                    }, /*                   SEMI shift  45 */
-/* State 45 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 46 */
-  {   9,  66, 0                    }, /*                 RBRACE reduce 18 */
-  {  17,  40, &yyActionTable[ 119] }, /*               arg_type shift  40 */
-  {   4,  25, 0                    }, /*                  IDENT shift  25 */
-  {   5,  22, 0                    }, /*              INTRINSIC shift  22 */
-  {  20,  46, &yyActionTable[ 121] }, /*              field_def shift  46 */
-  {  21,  47, &yyActionTable[ 122] }, /*             field_list shift  47 */
-  {  14,  23, 0                    }, /*                 STRUCT shift  23 */
-  {YYNOCODE,0,0}, /* Unused */
-/* State 47 */
-  {   9,  65, 0                    }, /*                 RBRACE reduce 17 */
-};
 
-/* The state table contains information needed to look up the correct
-** action in the action table, given the current state of the parser.
-** Information needed includes:
+/* Next are that tables used to determine what action to take based on the
+** current state and lookahead token.  These tables are used to implement
+** functions that take a state number and lookahead value and return an
+** action integer.  
 **
-**  +  A pointer to the start of the action hash table in yyActionTable.
+** Suppose the action integer is N.  Then the action is determined as
+** follows
 **
-**  +  A mask used to hash the look-ahead token.  The mask is an integer
-**     which is one less than the size of the hash table.  
+**   0 <= N < YYNSTATE                  Shift N.  That is, push the lookahead
+**                                      token onto the stack and goto state N.
 **
-**  +  The default action.  This is the action to take if no entry for
-**     the given look-ahead is found in the action hash table.
+**   YYNSTATE <= N < YYNSTATE+YYNRULE   Reduce by rule N-YYNSTATE.
+**
+**   N == YYNSTATE+YYNRULE              A syntax error has occurred.
+**
+**   N == YYNSTATE+YYNRULE+1            The parser accepts its input.
+**
+**   N == YYNSTATE+YYNRULE+2            No such action.  Denotes unused
+**                                      slots in the yy_action[] table.
+**
+** The action table is constructed as a single large table named yy_action[].
+** Given state S and lookahead X, the action is computed as
+**
+**      yy_action[ yy_shift_ofst[S] + X ]
+**
+** If the index value yy_shift_ofst[S]+X is out of range or if the value
+** yy_lookahead[yy_shift_ofst[S]+X] is not equal to X or if yy_shift_ofst[S]
+** is equal to YY_SHIFT_USE_DFLT, it means that the action is not in the table
+** and that yy_default[S] should be used instead.  
+**
+** The formula above is for computing the action when the lookahead is
+** a terminal symbol.  If the lookahead is a non-terminal (as occurs after
+** a reduce action) then the yy_reduce_ofst[] array is used in place of
+** the yy_shift_ofst[] array and YY_REDUCE_USE_DFLT is used in place of
+** YY_SHIFT_USE_DFLT.
+**
+** The following are the tables generated in this section:
+**
+**  yy_action[]        A single table containing all actions.
+**  yy_lookahead[]     A table containing the lookahead for each entry in
+**                     yy_action.  Used to detect hash collisions.
+**  yy_shift_ofst[]    For each state, the offset into yy_action for
+**                     shifting terminals.
+**  yy_reduce_ofst[]   For each state, the offset into yy_action for
+**                     shifting non-terminals after a reduce.
+**  yy_default[]       Default action for each state.
 */
-struct yyStateEntry {
-  struct yyActionEntry *hashtbl; /* Start of the hash table in yyActionTable */
-  int mask;                      /* Mask used for hashing the look-ahead */
-  YYACTIONTYPE actionDefault;    /* Default action if look-ahead not found */
+static YYACTIONTYPE yy_action[] = {
+ /*     0 */     4,   15,    2,   73,    1,    5,    4,   15,    2,   50,
+ /*    10 */     3,    5,   25,   22,   16,   25,   22,    6,   70,   10,
+ /*    20 */    66,   32,   23,   37,   33,   23,   31,   20,   29,   25,
+ /*    30 */    22,   40,   57,   17,   46,   43,   35,    6,   30,   23,
+ /*    40 */    26,   20,   29,   37,   33,   40,   69,   17,   46,   47,
+ /*    50 */    21,   17,   17,   48,   18,   41,    7,   13,    8,    7,
+ /*    60 */     9,   49,   11,   44,   19,   12,   14,   58,   24,   27,
+ /*    70 */    28,   68,   34,   36,   38,   39,   42,   45,   65,
 };
-static struct yyStateEntry yyStateTable[] = {
-  { &yyActionTable[0], 15, 72},
-  { &yyActionTable[16], 0, 72},
-  { &yyActionTable[17], 15, 72},
-  { &yyActionTable[33], 0, 72},
-  { &yyActionTable[34], 0, 51},
-  { &yyActionTable[35], 0, 52},
-  { &yyActionTable[36], 3, 72},
-  { &yyActionTable[40], 1, 72},
-  { &yyActionTable[42], 3, 72},
-  { &yyActionTable[46], 0, 72},
-  { &yyActionTable[47], 0, 72},
-  { &yyActionTable[48], 0, 72},
-  { &yyActionTable[49], 0, 59},
-  { &yyActionTable[50], 0, 72},
-  { &yyActionTable[51], 0, 60},
-  { &yyActionTable[52], 7, 72},
-  { &yyActionTable[60], 1, 72},
-  { &yyActionTable[62], 0, 53},
-  { &yyActionTable[63], 0, 72},
-  { &yyActionTable[64], 7, 72},
-  { &yyActionTable[72], 1, 72},
-  { &yyActionTable[74], 0, 71},
-  { &yyActionTable[75], 0, 54},
-  { &yyActionTable[76], 0, 72},
-  { &yyActionTable[77], 0, 55},
-  { &yyActionTable[78], 0, 56},
-  { &yyActionTable[79], 0, 72},
-  { &yyActionTable[80], 0, 72},
-  { &yyActionTable[81], 0, 62},
-  { &yyActionTable[82], 1, 72},
-  { &yyActionTable[84], 7, 72},
-  { &yyActionTable[92], 0, 72},
-  { &yyActionTable[93], 0, 61},
-  { &yyActionTable[94], 3, 72},
-  { &yyActionTable[98], 1, 72},
-  { &yyActionTable[100], 0, 72},
-  { &yyActionTable[101], 0, 63},
-  { &yyActionTable[102], 0, 72},
-  { &yyActionTable[103], 0, 72},
-  { &yyActionTable[104], 7, 72},
-  { &yyActionTable[112], 1, 72},
-  { &yyActionTable[114], 0, 72},
-  { &yyActionTable[115], 0, 67},
-  { &yyActionTable[116], 0, 72},
-  { &yyActionTable[117], 0, 72},
-  { &yyActionTable[118], 0, 64},
-  { &yyActionTable[119], 7, 72},
-  { &yyActionTable[127], 0, 72},
+static YYCODETYPE yy_lookahead[] = {
+ /*     0 */    25,   26,   27,   28,   29,   30,   25,   26,   27,    0,
+ /*    10 */    29,   30,    4,    5,   17,    4,    5,    8,   10,    4,
+ /*    20 */     9,   24,   14,   14,   15,   14,   16,   17,   18,    4,
+ /*    30 */     5,   17,   11,    1,   20,   21,    4,    8,    2,   14,
+ /*    40 */    16,   17,   18,   14,   15,   17,   10,    1,   20,   21,
+ /*    50 */     4,    1,    1,    0,    4,    4,   22,   23,    2,   22,
+ /*    60 */    23,    0,    3,    9,    7,   13,   11,   11,    4,   10,
+ /*    70 */    12,   10,   17,   12,    4,    6,   12,   12,    9,
 };
+#define YY_SHIFT_USE_DFLT (-1)
+static signed char yy_shift_ofst[] = {
+ /*     0 */    29,   53,    9,   61,   -1,   -1,   15,   56,   15,   21,
+ /*    10 */    59,   52,   -1,   55,   -1,   25,   50,   -1,   57,    8,
+ /*    20 */    46,   -1,   -1,   64,   -1,   -1,   59,   58,   -1,   36,
+ /*    30 */     8,   61,   -1,   25,   32,   61,   -1,   70,   69,   25,
+ /*    40 */    51,   64,   -1,   54,   65,   -1,   11,   69,
+};
+#define YY_REDUCE_USE_DFLT (-26)
+static signed char yy_reduce_ofst[] = {
+ /*     0 */   -25,  -26,  -19,  -26,  -26,  -26,   34,  -26,   37,  -26,
+ /*    10 */   -26,  -26,  -26,  -26,  -26,   -3,  -26,  -26,  -26,   24,
+ /*    20 */   -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
+ /*    30 */    10,  -26,  -26,   55,  -26,  -26,  -26,  -26,  -26,   14,
+ /*    40 */   -26,  -26,  -26,  -26,  -26,  -26,   28,  -26,
+};
+static YYACTIONTYPE yy_default[] = {
+ /*     0 */    72,   72,   72,   72,   51,   52,   72,   72,   72,   72,
+ /*    10 */    72,   72,   59,   72,   60,   72,   72,   53,   72,   72,
+ /*    20 */    72,   71,   54,   72,   55,   56,   72,   72,   62,   72,
+ /*    30 */    72,   72,   61,   72,   72,   72,   63,   72,   72,   72,
+ /*    40 */    72,   72,   67,   72,   72,   64,   72,   72,
+};
+#define YY_SZ_ACTTAB (sizeof(yy_action)/sizeof(yy_action[0]))
+
+/* The next table maps tokens into fallback tokens.  If a construct
+** like the following:
+** 
+**      %fallback ID X Y Z.
+**
+** appears in the grammer, then ID becomes a fallback token for X, Y,
+** and Z.  Whenever one of the tokens X, Y, or Z is input to the parser
+** but it does not parse, the type of the token is changed to ID and
+** the parse is retried before an error is thrown.
+*/
+#ifdef YYFALLBACK
+static const YYCODETYPE yyFallback[] = {
+};
+#endif /* YYFALLBACK */
 
 /* The following structure represents a single element of the
 ** parser's stack.  Information stored includes:
@@ -622,22 +448,26 @@ struct yyStackEntry {
   YYMINORTYPE minor; /* The user-supplied minor token value.  This
                      ** is the value of the token  */
 };
+typedef struct yyStackEntry yyStackEntry;
 
 /* The state of the parser is completely contained in an instance of
 ** the following structure */
 struct yyParser {
-  int idx;                            /* Index of top element in stack */
-  int errcnt;                         /* Shifts left before out of the error */
-  struct yyStackEntry *top;           /* Pointer to the top stack element */
-  struct yyStackEntry stack[YYSTACKDEPTH];  /* The parser's stack */
+  int yyidx;                    /* Index of top element in stack */
+  int yyerrcnt;                 /* Shifts left before out of the error */
+  yyStackEntry *yytop;          /* Pointer to the top stack element */
+  php_ffi_parserARG_SDECL                /* A place to hold %extra_argument */
+  yyStackEntry yystack[YYSTACKDEPTH];  /* The parser's stack */
 };
 typedef struct yyParser yyParser;
 
 #ifndef NDEBUG
 #include <stdio.h>
 static FILE *yyTraceFILE = 0;
-static char *yyTracePrompt = 0;
+static const char *yyTracePrompt = 0;
+#endif /* NDEBUG */
 
+#ifndef NDEBUG
 /* 
 ** Turn parser tracing on by giving a stream to which to write the trace
 ** and a prompt to preface each trace message.  Tracing is turned off
@@ -655,16 +485,18 @@ static char *yyTracePrompt = 0;
 ** Outputs:
 ** None.
 */
-void php_ffi_parserTrace(FILE *TraceFILE, char *zTracePrompt){
+void php_ffi_parserTrace(FILE *TraceFILE, const char *zTracePrompt){
   yyTraceFILE = TraceFILE;
   yyTracePrompt = zTracePrompt;
   if( yyTraceFILE==0 ) yyTracePrompt = 0;
   else if( yyTracePrompt==0 ) yyTraceFILE = 0;
 }
+#endif /* NDEBUG */
 
+#ifndef NDEBUG
 /* For tracing shifts, the names of all terminals and nonterminals
 ** are required.  The following table supplies these names */
-static char *yyTokenName[] = { 
+static const char *yyTokenName[] = { 
   "$",             "ASTERISK",      "COMMA",         "EQUALS",      
   "IDENT",         "INTRINSIC",     "LBRACE",        "LPAREN",      
   "LSQUARE",       "RBRACE",        "RPAREN",        "RSQUARE",     
@@ -674,10 +506,54 @@ static char *yyTokenName[] = {
   "func_proto",    "func_proto_with_attributes",  "optional_func_attribute_list",  "top_item",    
   "top_level",     "top_list",      "type_def",    
 };
-#define YYTRACE(X) if( yyTraceFILE ) fprintf(yyTraceFILE,"%sReduce [%s].\n",yyTracePrompt,X);
+#endif /* NDEBUG */
+
+#ifndef NDEBUG
+/* For tracing reduce actions, the names of all rules are required.
+*/
+static const char *yyRuleName[] = {
+ /*   0 */ "top_level ::= top_list",
+ /*   1 */ "top_list ::= top_item top_list",
+ /*   2 */ "top_list ::= top_item",
+ /*   3 */ "top_item ::= func_proto_with_attributes",
+ /*   4 */ "top_item ::= type_def",
+ /*   5 */ "arg_type ::= arg_type ASTERISK",
+ /*   6 */ "arg_type ::= INTRINSIC",
+ /*   7 */ "arg_type ::= STRUCT IDENT",
+ /*   8 */ "arg_type ::= IDENT",
+ /*   9 */ "func_attribute_list ::= func_attribute COMMA func_attribute_list",
+ /*  10 */ "func_attribute_list ::= func_attribute",
+ /*  11 */ "func_attribute ::= IDENT EQUALS STRING",
+ /*  12 */ "optional_func_attribute_list ::= LSQUARE func_attribute_list RSQUARE",
+ /*  13 */ "func_proto_with_attributes ::= optional_func_attribute_list func_proto",
+ /*  14 */ "func_proto ::= arg_type IDENT LPAREN arg_list RPAREN SEMI",
+ /*  15 */ "type_def ::= TYPEDEF arg_type IDENT SEMI",
+ /*  16 */ "type_def ::= STRUCT IDENT LBRACE field_list RBRACE SEMI",
+ /*  17 */ "field_list ::= field_def field_list",
+ /*  18 */ "field_list ::= field_def",
+ /*  19 */ "field_def ::= arg_type IDENT SEMI",
+ /*  20 */ "arg_list ::= argument COMMA arg_list",
+ /*  21 */ "arg_list ::= argument",
+ /*  22 */ "arg_list ::=",
+ /*  23 */ "argument ::= arg_type IDENT",
+};
+#endif /* NDEBUG */
+
+/*
+** This function returns the symbolic name associated with a token
+** value.
+*/
+const char *php_ffi_parserTokenName(int tokenType){
+#ifndef NDEBUG
+  if( tokenType>0 && (unsigned int) tokenType<(sizeof(yyTokenName)/sizeof(yyTokenName[0])) ){
+    return yyTokenName[tokenType];
+  }else{
+    return "Unknown";
+  }
 #else
-#define YYTRACE(X)
+  return "";
 #endif
+}
 
 /* 
 ** This function allocates a new parser.
@@ -693,9 +569,9 @@ static char *yyTokenName[] = {
 */
 void *php_ffi_parserAlloc(void *(*mallocProc)(size_t)){
   yyParser *pParser;
-  pParser = (yyParser*)(*mallocProc)( (int)sizeof(yyParser) );
+  pParser = (yyParser*)(*mallocProc)( (size_t)sizeof(yyParser) );
   if( pParser ){
-    pParser->idx = -1;
+    pParser->yyidx = -1;
   }
   return pParser;
 }
@@ -732,18 +608,18 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
 static int yy_pop_parser_stack(yyParser *pParser){
   YYCODETYPE yymajor;
 
-  if( pParser->idx<0 ) return 0;
+  if( pParser->yyidx<0 ) return 0;
 #ifndef NDEBUG
-  if( yyTraceFILE && pParser->idx>=0 ){
+  if( yyTraceFILE && pParser->yyidx>=0 ){
     fprintf(yyTraceFILE,"%sPopping %s\n",
       yyTracePrompt,
-      yyTokenName[pParser->top->major]);
+      yyTokenName[pParser->yytop->major]);
   }
 #endif
-  yymajor = pParser->top->major;
-  yy_destructor( yymajor, &pParser->top->minor);
-  pParser->idx--;
-  pParser->top--;
+  yymajor = pParser->yytop->major;
+  yy_destructor( yymajor, &pParser->yytop->minor);
+  pParser->yyidx--;
+  pParser->yytop--;
   return yymajor;
 }
 
@@ -765,36 +641,80 @@ void php_ffi_parserFree(
 ){
   yyParser *pParser = (yyParser*)p;
   if( pParser==0 ) return;
-  while( pParser->idx>=0 ) yy_pop_parser_stack(pParser);
+  while( pParser->yyidx>=0 ) yy_pop_parser_stack(pParser);
   (*freeProc)((void*)pParser);
 }
 
 /*
-** Find the appropriate action for a parser given the look-ahead token.
+** Find the appropriate action for a parser given the terminal
+** look-ahead token iLookAhead.
 **
 ** If the look-ahead token is YYNOCODE, then check to see if the action is
 ** independent of the look-ahead.  If it is, return the action, otherwise
 ** return YY_NO_ACTION.
 */
-static int yy_find_parser_action(
+static int yy_find_shift_action(
   yyParser *pParser,        /* The parser */
-  int iLookAhead             /* The look-ahead token */
+  int iLookAhead            /* The look-ahead token */
 ){
-  struct yyStateEntry *pState;   /* Appropriate entry in the state table */
-  struct yyActionEntry *pAction; /* Action appropriate for the look-ahead */
+  int i;
  
-  /* if( pParser->idx<0 ) return YY_NO_ACTION;  */
-  pState = &yyStateTable[pParser->top->stateno];
-  if( iLookAhead!=YYNOCODE ){
-    pAction = &pState->hashtbl[iLookAhead & pState->mask];
-    while( pAction ){
-      if( pAction->lookahead==iLookAhead ) return pAction->action;
-      pAction = pAction->next;
-    }
-  }else if( pState->mask!=0 || pState->hashtbl->lookahead!=YYNOCODE ){
+  /* if( pParser->yyidx<0 ) return YY_NO_ACTION;  */
+  i = yy_shift_ofst[pParser->yytop->stateno];
+  if( i==YY_SHIFT_USE_DFLT ){
+    return yy_default[pParser->yytop->stateno];
+  }
+  if( iLookAhead==YYNOCODE ){
     return YY_NO_ACTION;
   }
-  return pState->actionDefault;
+  i += iLookAhead;
+  if( i<0 || (unsigned int)i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+#ifdef YYFALLBACK
+    int iFallback;            /* Fallback token */
+    if( iLookAhead<sizeof(yyFallback)/sizeof(yyFallback[0])
+           && (iFallback = yyFallback[iLookAhead])!=0 ){
+#ifndef NDEBUG
+      if( yyTraceFILE ){
+        fprintf(yyTraceFILE, "%sFALLBACK %s => %s\n",
+           yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
+      }
+#endif
+      return yy_find_shift_action(pParser, iFallback);
+    }
+#endif
+    return yy_default[pParser->yytop->stateno];
+  }else{
+    return yy_action[i];
+  }
+}
+
+/*
+** Find the appropriate action for a parser given the non-terminal
+** look-ahead token iLookAhead.
+**
+** If the look-ahead token is YYNOCODE, then check to see if the action is
+** independent of the look-ahead.  If it is, return the action, otherwise
+** return YY_NO_ACTION.
+*/
+static int yy_find_reduce_action(
+  yyParser *pParser,        /* The parser */
+  int iLookAhead            /* The look-ahead token */
+){
+  int i;
+ 
+  i = yy_reduce_ofst[pParser->yytop->stateno];
+  if( i==YY_REDUCE_USE_DFLT ){
+    return yy_default[pParser->yytop->stateno];
+  }
+  if( iLookAhead==YYNOCODE ){
+    return YY_NO_ACTION;
+  }
+  i += iLookAhead;
+  if( i<0 || (unsigned int)i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+    return yy_default[pParser->yytop->stateno];
+  }else{
+    return yy_action[i];
+  }
 }
 
 /*
@@ -806,31 +726,33 @@ static void yy_shift(
   int yyMajor,                  /* The major token to shift in */
   YYMINORTYPE *yypMinor         /* Pointer ot the minor token to shift in */
 ){
-  yypParser->idx++;
-  yypParser->top++;
-  if( yypParser->idx>=YYSTACKDEPTH ){
-     yypParser->idx--;
-     yypParser->top--;
+  yypParser->yyidx++;
+  yypParser->yytop++;
+  if( yypParser->yyidx>=YYSTACKDEPTH ){
+     php_ffi_parserARG_FETCH;
+     yypParser->yyidx--;
+     yypParser->yytop--;
 #ifndef NDEBUG
      if( yyTraceFILE ){
        fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
      }
 #endif
-     while( yypParser->idx>=0 ) yy_pop_parser_stack(yypParser);
+     while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
      /* Here code is inserted which will execute if the parser
      ** stack every overflows */
+     php_ffi_parserARG_STORE; /* Suppress warning about unused %extra_argument var */
      return;
   }
-  yypParser->top->stateno = yyNewState;
-  yypParser->top->major = yyMajor;
-  yypParser->top->minor = *yypMinor;
+  yypParser->yytop->stateno = yyNewState;
+  yypParser->yytop->major = yyMajor;
+  yypParser->yytop->minor = *yypMinor;
 #ifndef NDEBUG
-  if( yyTraceFILE && yypParser->idx>0 ){
+  if( yyTraceFILE && yypParser->yyidx>0 ){
     int i;
     fprintf(yyTraceFILE,"%sShift %d\n",yyTracePrompt,yyNewState);
     fprintf(yyTraceFILE,"%sStack:",yyTracePrompt);
-    for(i=1; i<=yypParser->idx; i++)
-      fprintf(yyTraceFILE," %s",yyTokenName[yypParser->stack[i].major]);
+    for(i=1; i<=yypParser->yyidx; i++)
+      fprintf(yyTraceFILE," %s",yyTokenName[yypParser->yystack[i].major]);
     fprintf(yyTraceFILE,"\n");
   }
 #endif
@@ -869,7 +791,7 @@ static struct {
   { 18, 2 },
 };
 
-static void yy_accept(yyParser *  php_ffi_parserANSIARGDECL);  /* Forward Declaration */
+static void yy_accept(yyParser*);  /* Forward Declaration */
 
 /*
 ** Perform a reduce action and the shift that must immediately
@@ -878,88 +800,83 @@ static void yy_accept(yyParser *  php_ffi_parserANSIARGDECL);  /* Forward Declar
 static void yy_reduce(
   yyParser *yypParser,         /* The parser */
   int yyruleno                 /* Number of the rule by which to reduce */
-  php_ffi_parserANSIARGDECL
 ){
   int yygoto;                     /* The next state */
   int yyact;                      /* The next action */
   YYMINORTYPE yygotominor;        /* The LHS of the rule reduced */
-  struct yyStackEntry *yymsp;     /* The top of the parser's stack */
+  yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
-  yymsp = yypParser->top;
+  php_ffi_parserARG_FETCH;
+  yymsp = yypParser->yytop;
+#ifndef NDEBUG
+  if( yyTraceFILE && yyruleno>=0 
+        && (unsigned int)yyruleno<sizeof(yyRuleName)/sizeof(yyRuleName[0]) ){
+    fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
+      yyRuleName[yyruleno]);
+  }
+#endif /* NDEBUG */
+
   switch( yyruleno ){
   /* Beginning here are the reduction cases.  A typical example
   ** follows:
   **   case 0:
-  **     YYTRACE("<text of the rule>");
   **  #line <lineno> <grammarfile>
   **     { ... }           // User supplied code
   **  #line <lineno> <thisfile>
   **     break;
   */
       case 0:
-        YYTRACE("top_level ::= top_list")
         /* No destructor defined for top_list */
         break;
       case 1:
-        YYTRACE("top_list ::= top_item top_list")
         /* No destructor defined for top_item */
         /* No destructor defined for top_list */
         break;
       case 2:
-        YYTRACE("top_list ::= top_item")
         /* No destructor defined for top_item */
         break;
       case 3:
-        YYTRACE("top_item ::= func_proto_with_attributes")
         /* No destructor defined for func_proto_with_attributes */
         break;
       case 4:
-        YYTRACE("top_item ::= type_def")
         /* No destructor defined for type_def */
         break;
       case 5:
-        YYTRACE("arg_type ::= arg_type ASTERISK")
-#line 257 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 261 "..\\pecl\\ffi\\ffi_parser.y"
 { yygotominor.yy0 = yymsp[-1].minor.yy0; yygotominor.yy0.type.ptr_levels++; }
-#line 922 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 847 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for ASTERISK */
         break;
       case 6:
-        YYTRACE("arg_type ::= INTRINSIC")
-#line 258 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 262 "..\\pecl\\ffi\\ffi_parser.y"
 { yygotominor.yy0 = yymsp[0].minor.yy0; yygotominor.yy0.type.ptr_levels = 0;	}
-#line 929 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 853 "..\\pecl\\ffi\\ffi_parser.c"
         break;
       case 7:
-        YYTRACE("arg_type ::= STRUCT IDENT")
-#line 259 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 263 "..\\pecl\\ffi\\ffi_parser.y"
 {
    	yygotominor.yy0.type.intrinsic_type = FFI_TYPE_STRUCT;
 	yygotominor.yy0.type.struct_name = yymsp[0].minor.yy0.ident;
    	yygotominor.yy0.type.ptr_levels = 0;
 }
-#line 939 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 862 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for STRUCT */
         break;
       case 8:
-        YYTRACE("arg_type ::= IDENT")
-#line 265 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 269 "..\\pecl\\ffi\\ffi_parser.y"
 { /* TODO */ }
-#line 946 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 868 "..\\pecl\\ffi\\ffi_parser.c"
         break;
       case 9:
-        YYTRACE("func_attribute_list ::= func_attribute COMMA func_attribute_list")
         /* No destructor defined for func_attribute */
         /* No destructor defined for COMMA */
         /* No destructor defined for func_attribute_list */
         break;
       case 10:
-        YYTRACE("func_attribute_list ::= func_attribute")
         /* No destructor defined for func_attribute */
         break;
       case 11:
-        YYTRACE("func_attribute ::= IDENT EQUALS STRING")
-#line 270 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 274 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	if (IDENT_EQUALS("lib", yymsp[-2].minor.yy0.ident)) {
 		ctx->libname = yymsp[0].minor.yy0.ident;
@@ -968,51 +885,46 @@ static void yy_reduce(
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unsupported attribute %s", get_ident_string(yymsp[-2].minor.yy0.ident));
 	}
 }
-#line 969 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 888 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for EQUALS */
         break;
       case 12:
-        YYTRACE("optional_func_attribute_list ::= LSQUARE func_attribute_list RSQUARE")
         /* No destructor defined for LSQUARE */
         /* No destructor defined for func_attribute_list */
         /* No destructor defined for RSQUARE */
         break;
       case 13:
-        YYTRACE("func_proto_with_attributes ::= optional_func_attribute_list func_proto")
         /* No destructor defined for optional_func_attribute_list */
         break;
       case 14:
-        YYTRACE("func_proto ::= arg_type IDENT LPAREN arg_list RPAREN SEMI")
-#line 283 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 287 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	yygotominor.yy0.func = register_func(ctx, yymsp[-5].minor.yy0.type, yymsp[-4].minor.yy0.ident);
 	ctx->n_args = 0;
 }
-#line 989 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 905 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for LPAREN */
         /* No destructor defined for arg_list */
         /* No destructor defined for RPAREN */
         /* No destructor defined for SEMI */
         break;
       case 15:
-        YYTRACE("type_def ::= TYPEDEF arg_type IDENT SEMI")
-#line 289 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 293 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	CTX_TSRMLS_FETCH();
 	php_error_docref(NULL TSRMLS_CC, E_WARNING, "aliasing typedefs are not yet implemented");
 }
-#line 1002 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 917 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for TYPEDEF */
         /* No destructor defined for SEMI */
         break;
       case 16:
-        YYTRACE("type_def ::= STRUCT IDENT LBRACE field_list RBRACE SEMI")
-#line 294 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 298 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	register_type(ctx, yymsp[-4].minor.yy0.ident);	
 	ctx->n_args = 0;
 }
-#line 1013 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 927 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for STRUCT */
         /* No destructor defined for LBRACE */
         /* No destructor defined for field_list */
@@ -1020,54 +932,47 @@ static void yy_reduce(
         /* No destructor defined for SEMI */
         break;
       case 17:
-        YYTRACE("field_list ::= field_def field_list")
         /* No destructor defined for field_def */
         /* No destructor defined for field_list */
         break;
       case 18:
-        YYTRACE("field_list ::= field_def")
         /* No destructor defined for field_def */
         break;
       case 19:
-        YYTRACE("field_def ::= arg_type IDENT SEMI")
-#line 302 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 306 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	add_arg(ctx, yymsp[-2].minor.yy0.type, yymsp[-1].minor.yy0.ident);
 }
-#line 1035 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 946 "..\\pecl\\ffi\\ffi_parser.c"
         /* No destructor defined for SEMI */
         break;
       case 20:
-        YYTRACE("arg_list ::= argument COMMA arg_list")
         /* No destructor defined for argument */
         /* No destructor defined for COMMA */
         /* No destructor defined for arg_list */
         break;
       case 21:
-        YYTRACE("arg_list ::= argument")
         /* No destructor defined for argument */
         break;
       case 22:
-        YYTRACE("arg_list ::=")
         break;
       case 23:
-        YYTRACE("argument ::= arg_type IDENT")
-#line 310 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 314 "..\\pecl\\ffi\\ffi_parser.y"
 {
 	add_arg(ctx, yymsp[-1].minor.yy0.type, yymsp[0].minor.yy0.ident);
 }
-#line 1057 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 964 "..\\pecl\\ffi\\ffi_parser.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
   yysize = yyRuleInfo[yyruleno].nrhs;
-  yypParser->idx -= yysize;
-  yypParser->top -= yysize;
-  yyact = yy_find_parser_action(yypParser,yygoto);
+  yypParser->yyidx -= yysize;
+  yypParser->yytop -= yysize;
+  yyact = yy_find_reduce_action(yypParser,yygoto);
   if( yyact < YYNSTATE ){
     yy_shift(yypParser,yyact,yygoto,&yygotominor);
   }else if( yyact == YYNSTATE + YYNRULE + 1 ){
-    yy_accept(yypParser php_ffi_parserARGDECL);
+    yy_accept(yypParser);
   }
 }
 
@@ -1076,19 +981,20 @@ static void yy_reduce(
 */
 static void yy_parse_failed(
   yyParser *yypParser           /* The parser */
-  php_ffi_parserANSIARGDECL              /* Extra arguments (if any) */
 ){
+  php_ffi_parserARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sFail!\n",yyTracePrompt);
   }
 #endif
-  while( yypParser->idx>=0 ) yy_pop_parser_stack(yypParser);
+  while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
   /* Here code is inserted which will be executed whenever the
   ** parser fails */
-#line 5 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 5 "..\\pecl\\ffi\\ffi_parser.y"
  ctx->failed = 1; printf("FAIL: parser failed - %d errors\n", ctx->errors); 
-#line 1089 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 996 "..\\pecl\\ffi\\ffi_parser.c"
+  php_ffi_parserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -1098,12 +1004,13 @@ static void yy_syntax_error(
   yyParser *yypParser,           /* The parser */
   int yymajor,                   /* The major type of the error token */
   YYMINORTYPE yyminor            /* The minor type of the error token */
-  php_ffi_parserANSIARGDECL               /* Extra arguments (if any) */
 ){
+  php_ffi_parserARG_FETCH;
 #define TOKEN (yyminor.yy0)
-#line 6 "/home/wez/src/php/php5/ext/ffi/ffi_parser.y"
+#line 6 "..\\pecl\\ffi\\ffi_parser.y"
  ctx->errors++; printf("SYNTAX: entering error recovery near token %s\n", php_ffi_get_token_string(yymajor, TOKEN)); 
-#line 1104 "/home/wez/src/php/php5/ext/ffi/ffi_parser.c"
+#line 1012 "..\\pecl\\ffi\\ffi_parser.c"
+  php_ffi_parserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /*
@@ -1111,16 +1018,17 @@ static void yy_syntax_error(
 */
 static void yy_accept(
   yyParser *yypParser           /* The parser */
-  php_ffi_parserANSIARGDECL              /* Extra arguments (if any) */
 ){
+  php_ffi_parserARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sAccept!\n",yyTracePrompt);
   }
 #endif
-  while( yypParser->idx>=0 ) yy_pop_parser_stack(yypParser);
+  while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
   /* Here code is inserted which will be executed whenever the
   ** parser accepts */
+  php_ffi_parserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
 /* The main parser program.
@@ -1146,7 +1054,7 @@ void php_ffi_parser(
   void *yyp,                   /* The parser */
   int yymajor,                 /* The major token code number */
   php_ffi_parserTOKENTYPE yyminor       /* The value for the token */
-  php_ffi_parserANSIARGDECL
+  php_ffi_parserARG_PDECL               /* Optional %extra_argument parameter */
 ){
   YYMINORTYPE yyminorunion;
   int yyact;            /* The parser action. */
@@ -1156,16 +1064,17 @@ void php_ffi_parser(
 
   /* (re)initialize the parser, if necessary */
   yypParser = (yyParser*)yyp;
-  if( yypParser->idx<0 ){
+  if( yypParser->yyidx<0 ){
     if( yymajor==0 ) return;
-    yypParser->idx = 0;
-    yypParser->errcnt = -1;
-    yypParser->top = &yypParser->stack[0];
-    yypParser->top->stateno = 0;
-    yypParser->top->major = 0;
+    yypParser->yyidx = 0;
+    yypParser->yyerrcnt = -1;
+    yypParser->yytop = &yypParser->yystack[0];
+    yypParser->yytop->stateno = 0;
+    yypParser->yytop->major = 0;
   }
   yyminorunion.yy0 = yyminor;
   yyendofinput = (yymajor==0);
+  php_ffi_parserARG_STORE;
 
 #ifndef NDEBUG
   if( yyTraceFILE ){
@@ -1174,17 +1083,17 @@ void php_ffi_parser(
 #endif
 
   do{
-    yyact = yy_find_parser_action(yypParser,yymajor);
+    yyact = yy_find_shift_action(yypParser,yymajor);
     if( yyact<YYNSTATE ){
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
-      yypParser->errcnt--;
-      if( yyendofinput && yypParser->idx>=0 ){
+      yypParser->yyerrcnt--;
+      if( yyendofinput && yypParser->yyidx>=0 ){
         yymajor = 0;
       }else{
         yymajor = YYNOCODE;
       }
     }else if( yyact < YYNSTATE + YYNRULE ){
-      yy_reduce(yypParser,yyact-YYNSTATE php_ffi_parserARGDECL);
+      yy_reduce(yypParser,yyact-YYNSTATE);
     }else if( yyact == YY_ERROR_ACTION ){
 #ifndef NDEBUG
       if( yyTraceFILE ){
@@ -1211,10 +1120,10 @@ void php_ffi_parser(
       **    shifted successfully.
       **
       */
-      if( yypParser->errcnt<0 ){
-        yy_syntax_error(yypParser,yymajor,yyminorunion php_ffi_parserARGDECL);
+      if( yypParser->yyerrcnt<0 ){
+        yy_syntax_error(yypParser,yymajor,yyminorunion);
       }
-      if( yypParser->top->major==YYERRORSYMBOL || yyerrorhit ){
+      if( yypParser->yytop->major==YYERRORSYMBOL || yyerrorhit ){
 #ifndef NDEBUG
         if( yyTraceFILE ){
           fprintf(yyTraceFILE,"%sDiscard input token %s\n",
@@ -1225,23 +1134,23 @@ void php_ffi_parser(
         yymajor = YYNOCODE;
       }else{
          while(
-          yypParser->idx >= 0 &&
-          yypParser->top->major != YYERRORSYMBOL &&
-          (yyact = yy_find_parser_action(yypParser,YYERRORSYMBOL)) >= YYNSTATE
+          yypParser->yyidx >= 0 &&
+          yypParser->yytop->major != YYERRORSYMBOL &&
+          (yyact = yy_find_shift_action(yypParser,YYERRORSYMBOL)) >= YYNSTATE
         ){
           yy_pop_parser_stack(yypParser);
         }
-        if( yypParser->idx < 0 || yymajor==0 ){
+        if( yypParser->yyidx < 0 || yymajor==0 ){
           yy_destructor(yymajor,&yyminorunion);
-          yy_parse_failed(yypParser php_ffi_parserARGDECL);
+          yy_parse_failed(yypParser);
           yymajor = YYNOCODE;
-        }else if( yypParser->top->major!=YYERRORSYMBOL ){
+        }else if( yypParser->yytop->major!=YYERRORSYMBOL ){
           YYMINORTYPE u2;
           u2.YYERRSYMDT = 0;
           yy_shift(yypParser,yyact,YYERRORSYMBOL,&u2);
         }
       }
-      yypParser->errcnt = 3;
+      yypParser->yyerrcnt = 3;
       yyerrorhit = 1;
 #else  /* YYERRORSYMBOL is not defined */
       /* This is what we do if the grammar does not define ERROR:
@@ -1253,20 +1162,29 @@ void php_ffi_parser(
       ** As before, subsequent error messages are suppressed until
       ** three input tokens have been successfully shifted.
       */
-      if( yypParser->errcnt<=0 ){
-        yy_syntax_error(yypParser,yymajor,yyminorunion php_ffi_parserARGDECL);
+      if( yypParser->yyerrcnt<=0 ){
+        yy_syntax_error(yypParser,yymajor,yyminorunion);
       }
-      yypParser->errcnt = 3;
+      yypParser->yyerrcnt = 3;
       yy_destructor(yymajor,&yyminorunion);
       if( yyendofinput ){
-        yy_parse_failed(yypParser php_ffi_parserARGDECL);
+        yy_parse_failed(yypParser);
       }
       yymajor = YYNOCODE;
 #endif
     }else{
-      yy_accept(yypParser php_ffi_parserARGDECL);
+      yy_accept(yypParser);
       yymajor = YYNOCODE;
     }
-  }while( yymajor!=YYNOCODE && yypParser->idx>=0 );
+  }while( yymajor!=YYNOCODE && yypParser->yyidx>=0 );
   return;
 }
+
+/*
+Local variables:
+tab-width: 4
+c-basic-offset: 4
+End:
+vim600: noet sw=4 ts=4 fdm=marker
+vim<600: noet sw=4 ts=4
+*/
