@@ -16,8 +16,8 @@
  <release>
   <state>alpha</state>
   <version>0.2</version>
-  <date>2004-??-??</date>
-  <notes>Initial release</notes>
+  <date>2004-01-13</date>
+  <notes>Fixed some pointer problems, made some general improvements</notes>
   <filelist>
 
 <file role="src" name="config.m4"/>
