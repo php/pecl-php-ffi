@@ -421,6 +421,18 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 		convert_to_double(val);
 		*mem = &Z_DVAL_P(val);
 		return 1;
+	} else if (argtype->type == &ffi_type_sint64 || argtype->type == &ffi_type_uint64) {
+		if (want_alloc) {
+			*mem = emalloc(sizeof(SINT64));
+			*need_free = 1;
+		}	
+		if (Z_TYPE_P(val) == IS_LONG) {
+			*(SINT64*)mem = Z_LVAL_P(val);
+		} else {
+			convert_to_string(val);
+			*(SINT64*)mem = php_ffi_strto_int64(Z_STRVAL_P(val), NULL, -1, argtype->type == &ffi_type_uint64);
+		}
+		return 1;	
 	}
 
 	return 0;
@@ -470,6 +482,11 @@ int php_ffi_native_to_zval(void *mem, struct php_ffi_typed_arg *argtype, zval *v
 		return 1;
 	} else if (argtype->type == &ffi_type_double) {
 		ZVAL_DOUBLE(val, *(double*)mem);
+		return 1;
+	} else if (argtype->type == &ffi_type_sint64 || argtype->type == &ffi_type_uint64) {
+		char intbuf[128];
+		php_ffi_int64_tostr(*(SINT64*)mem, intbuf, -1);
+		ZVAL_STRING(val, intbuf, 1);
 		return 1;
 	}
 

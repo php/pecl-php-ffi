@@ -162,3 +162,11 @@ php_ffi_function *php_ffi_parser_register_func(struct php_ffi_def_context *ctx, 
 void php_ffi_struct_dtor(void *object, zend_object_handle handle TSRMLS_DC);
 void php_ffi_struct_object_clone(void *object, void **clone_ptr TSRMLS_DC);
 extern zend_object_handlers php_ffi_struct_object_handlers;
+
+SINT64 php_ffi_strto_int64(const char *nptr, char **endptr, int base, int is_unsigned);
+char *php_ffi_int64_tostr(SINT64 val, char *dst, int radix);
+
+#define UPHP_FFI_SINT64_MAX	(~(UINT64)0)
+#define PHP_FFI_SINT64_MIN	((SINT64)0x8000000000000000)
+#define PHP_FFI_SINT64_MAX	((SINT64)0x7FFFFFFFFFFFFFFF)
+

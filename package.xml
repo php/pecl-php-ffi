@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE package SYSTEM "../pear/package.dtd">
+<package>
+ <name>ffi</name>
+ <summary>Foreign Function Interface</summary>
+ <maintainers>
+  <maintainer>
+   <user>wez</user>
+   <name>Wez Furlong</name>
+   <email>wez@php.net</email>
+   <role>lead</role>
+  </maintainer>
+ </maintainers>
+ <description>FFI is a multi-platform extension for PHP 5 that allows you to bind to functions from arbitrary shared libraries and call them.</description>
+ <license>PHP</license>
+ <release>
+  <state>alpha</state>
+  <version>0.1</version>
+  <date>2004-01-11</date>
+  <notes>Initial release</notes>
+  <filelist>
+
+<file role="src" name="config.m4"/>
+<file role="src" name="config.w32"/>
+<file role="src" name="CREDITS"/>
+<file role="src" name="EXPERIMENTAL"/>
+<file role="src" name="ffi_library.c"/>
+<file role="src" name="ffi_parser.c"/>
+<file role="src" name="ffi_parser.h"/>
+<file role="src" name="ffi_parser_util.c"/>
+<file role="src" name="ffi_parser.y"/>
+<file role="src" name="ffi_struct.c"/>
+<file role="src" name="ffi_int64.c"/>
+<file role="src" name="Makefile.frag"/>
+<file role="src" name="php_ffi.c"/>
+<file role="src" name="php_ffi.h"/>
+<file role="src" name="php_ffi_internal.h"/>
+<file role="doc" name="README"/>
+
+<dir name="libffi" role="src">
+ <file role="src" name="fficonfig.h.in"/>
+ <file role="src" name="LICENSE"/>
+ <file role="src" name="README"/>
+
+ <dir name="include" role="src">
+  <file role="src" name="ffi_common.h"/>
+  <file role="src" name="fficonfig.h"/>
+  <file role="src" name="ffi.h.in"/>
+  <file role="src" name="ffi_mips.h"/>
+ </dir>
+
+ <dir name="src" role="src">
+  <file role="src" name="debug.c"/>
+  <file role="src" name="ffitest.c"/>
+  <file role="src" name="java_raw_api.c"/>
+  <file role="src" name="prep_cif.c"/>
+  <file role="src" name="raw_api.c"/>
+  <file role="src" name="types.c"/>
+
+  <dir name="alpha" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="osf.S"/>
+  </dir>
+
+  <dir name="arm" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="sysv.S"/>
+  </dir>
+
+  <dir name="ia64" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="ia64_flags.h"/>
+   <file role="src" name="unix.S"/>
+  </dir>
+
+  <dir name="m68k" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="sysv.S"/>
+  </dir>
+
+  <dir name="mips" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="n32.S"/>
+   <file role="src" name="o32.S"/>
+  </dir>
+
+  <dir name="powerpc" role="src">
+   <file role="src" name="aix_closure.S"/>
+   <file role="src" name="aix.S"/>
+   <file role="src" name="asm.h"/>
+   <file role="src" name="darwin_closure.S"/>
+   <file role="src" name="darwin.S"/>
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="ffi_darwin.c"/>
+   <file role="src" name="ppc_closure.S"/>
+   <file role="src" name="sysv.S"/>
+  </dir>
+
+  <dir name="s390" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="sysv.S"/>
+  </dir>
+
+  <dir name="sh" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="sysv.S"/>
+  </dir>
+
+  <dir name="sparc" role="src">
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="v8.S"/>
+   <file role="src" name="v9.S"/>
+  </dir>
+
+  <dir name="x86" role="src">
+   <file role="src" name="ffi64.c"/>
+   <file role="src" name="ffi.c"/>
+   <file role="src" name="sysv.S"/>
+   <file role="src" name="unix64.S"/>
+   <file role="src" name="win32-msvc.c"/>
+   <file role="src" name="win32.S"/>
+  </dir>
+ </dir>
+
+ <dir name="tests" role="test">
+  <file name="001.phpt"/>
+ </dir>
+
+  </filelist>
+  <deps>
+   <dep type="php" rel="ge" version="5" />
+  </deps>
+ </release>
+</package>
+<!--
+vim:et:ts=1:sw=1
+-->

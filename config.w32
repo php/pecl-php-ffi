@@ -4,7 +4,7 @@
 ARG_WITH("ffi", "Foreign Function Interface Support", "no");
 
 if (PHP_FFI == "yes") {
-	EXTENSION("ffi", "php_ffi.c ffi_struct.c ffi_library.c ffi_parser.c ffi_parser_util.c", null,
+	EXTENSION("ffi", "php_ffi.c ffi_struct.c ffi_library.c ffi_parser.c ffi_parser_util.c ffi_int64.c", null,
 		"/D PHP_LIBFFI_VERSION=\"2.00-beta\" /I\"" + configure_module_dirname + "/libffi/include\"");
 	ADD_SOURCES(configure_module_dirname + "/libffi/src/x86", "ffi.c win32-msvc.c", "ffi");
 	ADD_SOURCES(configure_module_dirname + "/libffi/src", "debug.c prep_cif.c types.c raw_api.c java_raw_api.c", "ffi");
