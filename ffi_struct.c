@@ -383,40 +383,65 @@ int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi
 
 	if (argtype->type == &ffi_type_slong || argtype->type == &ffi_type_sint ||
 			argtype->type == &ffi_type_uint32 || argtype->type == &ffi_type_sint32) {
-		convert_to_long(val);
-		*(long **)mem = &Z_LVAL_P(val);
+
+		if (Z_TYPE_P(val) == IS_STRING && Z_STRLEN_P(val) == 1) {
+			if (want_alloc) {
+				*mem = emalloc(sizeof(long));
+				*need_free = 1;
+			}
+			**(long**)mem = Z_STRVAL_P(val)[0];
+		} else {
+			convert_to_long(val);
+			*(long **)mem = &Z_LVAL_P(val);
+		}
 		return 1;
 	} else if (argtype->type == &ffi_type_uint8) {
-		convert_to_long(val);
 		if (want_alloc) {
 			*mem = emalloc(sizeof(char));
 			*need_free = 1;
 		}
-		**(unsigned char**)mem = (unsigned char)Z_LVAL_P(val);
+		if (Z_TYPE_P(val) == IS_STRING && Z_STRLEN_P(val) == 1) {
+			**(unsigned char**)mem = Z_STRVAL_P(val)[0];
+		} else {
+			convert_to_long(val);
+			**(unsigned char**)mem = (unsigned char)Z_LVAL_P(val);
+		}
 		return 1;
 	} else if (argtype->type == &ffi_type_sint8) {
-		convert_to_long(val);
 		if (want_alloc) {
 			*mem = emalloc(sizeof(char));
 			*need_free = 1;
 		}
-		**(char**)mem = (char)Z_LVAL_P(val);
+		if (Z_TYPE_P(val) == IS_STRING && Z_STRLEN_P(val) == 1) {
+			**(char**)mem = Z_STRVAL_P(val)[0];
+		} else {
+			convert_to_long(val);
+			**(char**)mem = (char)Z_LVAL_P(val);
+		}
 		return 1;
 	} else if (argtype->type == &ffi_type_uint16) {
-		convert_to_long(val);
 		if (want_alloc) {
 			*mem = emalloc(sizeof(short));
 			*need_free = 1;
 		}
-		**(unsigned short**)mem = (unsigned short)Z_LVAL_P(val);
+		if (Z_TYPE_P(val) == IS_STRING && Z_STRLEN_P(val) == 1) {
+			**(unsigned short**)mem = Z_STRVAL_P(val)[0];
+		} else {
+			convert_to_long(val);
+			**(unsigned short**)mem = (unsigned short)Z_LVAL_P(val);
+		}
 		return 1;
 	} else if (argtype->type == &ffi_type_sint16) {
-		convert_to_long(val);
 		if (want_alloc) {
 			*mem = emalloc(sizeof(short));
 			*need_free = 1;
 		}
-		**(short**)mem = (short)Z_LVAL_P(val);
+		if (Z_TYPE_P(val) == IS_STRING && Z_STRLEN_P(val) == 1) {
+			**(short**)mem = Z_STRVAL_P(val)[0];
+		} else {
+			convert_to_long(val);
+			**(short**)mem = (short)Z_LVAL_P(val);
+		}
 		return 1;
 	} else if (argtype->type == &ffi_type_double) {
 		convert_to_double(val);
