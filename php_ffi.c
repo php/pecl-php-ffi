@@ -93,7 +93,7 @@ PHP_MINIT_FUNCTION(ffi)
 {
 	zend_class_entry ce;
 
-	INIT_CLASS_ENTRY(ce, "ffi", NULL);
+	INIT_CLASS_ENTRY(ce, "ffi", php_ffi_context_funcs);
 	ce.create_object = php_ffi_context_object_new;
 	php_ffi_context_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
 

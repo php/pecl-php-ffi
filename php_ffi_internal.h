@@ -67,6 +67,7 @@ typedef struct {
 	HashTable libraries;	/* libraries we loaded */
 	HashTable functions; 	/* case sensitive function names -> php_ffi_function */
 	HashTable types;		/* structure definitions */
+	zend_class_entry *ce;	/* needed for inheritance to work */
 } php_ffi_context;
 
 /* state for ffi_struct class */

@@ -216,6 +216,12 @@ static PHP_FUNCTION(php_ffi_context_create_instance)
 	parse_defs(obj, funcdefs);
 }
 
+function_entry php_ffi_context_funcs[] = {
+	{ "__construct", PHP_FN(php_ffi_context_create_instance), NULL },
+	{ NULL, NULL, NULL }
+};
+
+
 void php_ffi_type_dtor(void *pDest)
 {
 	int i;
@@ -494,21 +500,30 @@ static union _zend_function *php_ffi_constructor_get(zval *object TSRMLS_DC)
 	zend_internal_function *f;
 
 	obj = CTX_FETCH(object);
+	
+	if (obj->ce != php_ffi_context_class_entry) {
+		return obj->ce->constructor;
+	} else {
+		f = emalloc(sizeof(zend_internal_function));
+		f->function_name = obj->ce->name;
+		f->scope = obj->ce;
+		f->arg_info = NULL;
+		f->num_args = 0;
+		f->fn_flags = 0;
 
-	f = emalloc(sizeof(zend_internal_function));
-	f->type = ZEND_INTERNAL_FUNCTION;
-	f->function_name = php_ffi_context_class_entry->name;
-	f->scope = php_ffi_context_class_entry;
-	f->arg_info = NULL;
-	f->num_args = 0;
-	f->fn_flags = 0;
-	f->handler = ZEND_FN(php_ffi_context_create_instance);
+		f->type = ZEND_INTERNAL_FUNCTION;
+		f->handler = ZEND_FN(php_ffi_context_create_instance);
+	}
+
 	return (union _zend_function*)f;
 }
 
 static zend_class_entry *php_ffi_class_entry_get(zval *object TSRMLS_DC)
 {
-	return php_ffi_context_class_entry;
+	php_ffi_context *obj;
+	obj = CTX_FETCH(object);
+
+	return obj->ce;
 }
 
 static int php_ffi_class_name_get(zval *object, char **class_name, zend_uint *class_name_len, int parent TSRMLS_DC)
@@ -516,8 +531,8 @@ static int php_ffi_class_name_get(zval *object, char **class_name, zend_uint *cl
 	php_ffi_context *obj;
 	obj = CTX_FETCH(object);
 
-	*class_name = estrndup(php_ffi_context_class_entry->name, php_ffi_context_class_entry->name_length);
-	*class_name_len = php_ffi_context_class_entry->name_length;
+	*class_name = estrndup(obj->ce->name, obj->ce->name_length);
+	*class_name_len = obj->ce->name_length;
 
 	return 0;
 }
@@ -598,6 +613,7 @@ zend_object_value php_ffi_context_object_new(zend_class_entry *ce TSRMLS_DC)
 	zend_hash_init(&obj->functions, 2, NULL, php_ffi_func_dtor, 0);
 	zend_hash_init(&obj->libraries, 2, NULL, php_ffi_lib_dtor, 0);
 	zend_hash_init(&obj->types, 2, NULL, php_ffi_type_dtor, 0);
+	obj->ce = ce;
 	
 	retval.handle = zend_objects_store_put(obj, php_ffi_context_dtor, php_ffi_object_clone TSRMLS_CC);
 	retval.handlers = &php_ffi_object_handlers;
