@@ -27,6 +27,7 @@
 #include "ext/standard/info.h"
 #include "php_ffi.h"
 #include "Zend/zend_default_classes.h"
+#include "Zend/zend_object_handlers.h"
 
 #include "php_ffi_internal.h"
 
@@ -405,6 +406,19 @@ static union _zend_function *php_ffi_method_get(zval *object, char *name, int le
 	func = bind_func(obj, name, len TSRMLS_CC);
 
 	if (func == NULL) {
+		if (obj->ce != php_ffi_context_class_entry) {
+			zend_internal_function *call_user_call = emalloc(sizeof(zend_internal_function));
+		        call_user_call->type = ZEND_INTERNAL_FUNCTION;
+		        call_user_call->handler = zend_std_call_user_call;
+		        call_user_call->arg_info = NULL;
+		        call_user_call->num_args = 0;
+		        call_user_call->scope = obj->ce;
+		        call_user_call->fn_flags = 0;
+		        call_user_call->function_name = estrndup(name, len);
+
+		        return (union _zend_function *)call_user_call;
+		}
+
 		return NULL;
 	}
 
