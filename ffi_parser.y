@@ -62,7 +62,9 @@ const char *php_ffi_get_token_string(int major, php_ffi_tokentype t)
 				case FFI_TYPE_INT: c= "int"; break;
 				case FFI_TYPE_FLOAT: c = "float"; break;
 				case FFI_TYPE_DOUBLE: c = "double"; break;
+#if SIZEOF_LONG_DOUBLE != SIZEOF_DOUBLE
 				case FFI_TYPE_LONGDOUBLE: c = "long double"; break;
+#endif
 				case FFI_TYPE_UINT8: c = "uint8"; break;
 				case FFI_TYPE_SINT8: c = "sint8"; break;
 				case FFI_TYPE_UINT16: c = "uint16"; break;
@@ -126,7 +128,9 @@ static ffi_type *resolve_type(struct php_ffi_def_context *ctx, php_ffi_type_ref 
 		case FFI_TYPE_INT:			ft = &ffi_type_sint; break;
 		case FFI_TYPE_FLOAT:		ft = &ffi_type_float; break;
 		case FFI_TYPE_DOUBLE:		ft = &ffi_type_double; break;
+#if SIZEOF_LONG_DOUBLE != SIZEOF_DOUBLE
 		case FFI_TYPE_LONGDOUBLE:	ft = &ffi_type_longdouble; break;
+#endif
 		case FFI_TYPE_UINT8:		ft = &ffi_type_uint8; break;
 		case FFI_TYPE_SINT8:		ft = &ffi_type_sint8; break;
 		case FFI_TYPE_UINT16:		ft = &ffi_type_uint16; break;
