@@ -2,9 +2,6 @@
 Check for ffi presence
 --SKIPIF--
 <?php if (!extension_loaded("ffi")) print "skip"; ?>
---POST--
---GET--
---INI--
 --FILE--
 <?php 
 echo "ffi extension is available";
