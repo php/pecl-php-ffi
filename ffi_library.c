@@ -350,14 +350,22 @@ static php_ffi_function *bind_func(php_ffi_context *ctx, char *name, int len TSR
 	}
 
 	if (func->func_addr == NULL) {
-#ifdef DLSYM_NEEDS_UNDERSCORE
+#if defined(HAVE_LIBDL)
+# define php_ffi_get_sym(handle, name)	dlsym(handle, name)
+#elif defined(HAVE_MACH_O_DYLD_H)
+# define php_ffi_get_sym(handle, name)	zend_mh_bundle_symbol(handle, name)
+#elif define(PHP_WIN32)
+# define php_ffi_get_sym(handle, name)	GetProcAddress(handle, name)
+#else
+# error You lose
+#endif
+#if defined(DLSYM_NEEDS_UNDERSCORE) || defined(HAVE_MACH_O_DYLD_H)
 		char symbolname[256];
 
 		snprintf(symbolname, sizeof(symbolname), "_%s", name);
-		func->func_addr = dlsym(func->lib->handle, symbolname);
-#else
-		func->func_addr = DL_FETCH_SYMBOL(func->lib->handle, name);
+		name = symbolname;
 #endif
+		func->func_addr = php_ffi_get_sym(func->lib->handle, name);
 		if (func->func_addr == NULL) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "function \"%s\" was not found in library %s",
 					name, func->lib->libname);
