@@ -82,7 +82,7 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, zend_bool 
 
 	obj = STRUCT_FETCH(object);
 
-	if (strcmp(Z_STRVAL_P(member), "__as_binary") == 0) {
+	if (strcmp(Z_STRVAL_P(member), "__asBinary") == 0) {
 		ZVAL_STRINGL(return_value, obj->mem, obj->memlen, 1);
 		return return_value;
 	} else if (strcmp(Z_STRVAL_P(member), "__sizeof") == 0) {
@@ -116,7 +116,7 @@ static void php_ffi_struct_property_write(zval *object, zval *member, zval *valu
 
 	obj = STRUCT_FETCH(object);
 
-	if (strcmp(Z_STRVAL_P(member), "__as_binary") == 0) {
+	if (strcmp(Z_STRVAL_P(member), "__asBinary") == 0) {
 		if (Z_TYPE_P(value) != IS_STRING)  {
 			PHP_FFI_THROW("__as_binary value in assignment *MUST* be a string");
 			return;
