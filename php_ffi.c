@@ -57,7 +57,7 @@ zend_module_entry ffi_module_entry = {
 	PHP_RINIT(ffi),
 	PHP_RSHUTDOWN(ffi),
 	PHP_MINFO(ffi),
-	"0.2",
+	"0.3",
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
