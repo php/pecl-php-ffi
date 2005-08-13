@@ -146,7 +146,7 @@ void php_ffi_parser(
 
 #define CTX_FETCH(x)	(php_ffi_context*)zend_object_store_get_object(x TSRMLS_CC)
 #define STRUCT_FETCH(x)	(php_ffi_struct*)zend_object_store_get_object(x TSRMLS_CC)
-#define PHP_FFI_THROW(msg)	zend_throw_exception(zend_exception_get_default(), msg, 0 TSRMLS_CC)
+#define PHP_FFI_THROW(msg)	zend_throw_exception(zend_exception_get_default(TSRMLS_C), msg, 0 TSRMLS_CC)
 
 int php_ffi_zval_to_native(void **mem, int *need_free, zval *val, struct php_ffi_typed_arg *argtype TSRMLS_DC);
 int php_ffi_native_to_zval(void *mem, struct php_ffi_typed_arg *argtype, zval *val TSRMLS_DC);
