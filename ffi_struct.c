@@ -271,14 +271,8 @@ static int php_ffi_struct_objects_compare(zval *object1, zval *object2 TSRMLS_DC
 	return -1;
 }
 
-static int php_ffi_struct_object_cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
+static int php_ffi_struct_object_cast(zval *readobj, zval *writeobj, int type TSRMLS_DC)
 {
-	if (should_free) {
-		zval_dtor(writeobj);
-	}
-
-	ZVAL_NULL(writeobj);
-
 	return FAILURE;
 }
 
