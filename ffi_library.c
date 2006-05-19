@@ -150,7 +150,7 @@ static int parse_defs(php_ffi_context *the_ctx, char *proto_text)
 			case '=': tok = PHP_FFI_TOK_EQUALS; break;
 			case ',': tok = PHP_FFI_TOK_COMMA; break;
 			default:
-				if (isalpha(*c)) {
+				if (isalpha(*c) || *c == '_') {
 		  			while (isalnum(*c) || *c == '_') {
   						c++;
 					}
