@@ -57,7 +57,7 @@ zend_module_entry ffi_module_entry = {
 	PHP_RINIT(ffi),
 	PHP_RSHUTDOWN(ffi),
 	PHP_MINFO(ffi),
-	"0.3",
+	PHP_FFI_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
@@ -144,6 +144,7 @@ PHP_MINFO_FUNCTION(ffi)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "ffi support", "enabled");
+	php_info_print_table_row(2, "extension version", PHP_FFI_VERSION);
 /*	php_info_print_table_row(2, "ffi library version", PHP_LIBFFI_VERSION); */
 	php_info_print_table_end();
 

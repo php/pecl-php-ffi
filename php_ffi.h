@@ -24,6 +24,8 @@
 extern zend_module_entry ffi_module_entry;
 #define phpext_ffi_ptr &ffi_module_entry
 
+#define PHP_FFI_VERSION "0.4.0-dev"
+
 #ifdef PHP_WIN32
 #define PHP_FFI_API __declspec(dllexport)
 #else
