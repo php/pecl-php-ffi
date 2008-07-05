@@ -21,10 +21,6 @@
 
 #include "ffi.h"
 
-#ifdef PHP_WIN32
-# define SINT64	INT64
-#endif
-
 typedef struct {
 	DL_HANDLE handle;		/* handle to the library */
 	char *libname;			/* name of the library (for error messages) */

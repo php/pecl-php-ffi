@@ -77,8 +77,8 @@ static zval *php_ffi_struct_property_read(zval *object, zval *member, int type T
 
 	MAKE_STD_ZVAL(return_value);
 	ZVAL_NULL(return_value);
-	return_value->refcount = 0;
-	return_value->is_ref = 0;
+	Z_SET_REFCOUNT_P(return_value, 0);
+	Z_UNSET_ISREF_P(return_value);
 
 	obj = STRUCT_FETCH(object);
 
@@ -153,8 +153,8 @@ static zval *php_ffi_struct_read_dimension(zval *object, zval *offset, int type 
 
 	MAKE_STD_ZVAL(return_value);
 	ZVAL_NULL(return_value);
-	return_value->refcount = 0;
-	return_value->is_ref = 0;
+	Z_SET_REFCOUNT_P(return_value, 0);
+	Z_UNSET_ISREF_P(return_value);
 
 	PHP_FFI_THROW("no dimension support yet");
 	return return_value;
