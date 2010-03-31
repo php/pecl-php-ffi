@@ -52,8 +52,8 @@ PHP_MINFO_FUNCTION(ffi);
 zend_object_value php_ffi_context_object_new(zend_class_entry *ce TSRMLS_DC);
 zend_object_value php_ffi_struct_object_new(zend_class_entry *ce TSRMLS_DC);
 extern zend_class_entry *php_ffi_struct_class_entry, *php_ffi_context_class_entry;
-extern function_entry php_ffi_struct_funcs[];
-extern function_entry php_ffi_context_funcs[];
+extern zend_function_entry php_ffi_struct_funcs[];
+extern zend_function_entry php_ffi_context_funcs[];
 
 /* 
   	Declare any global variables you may need between the BEGIN

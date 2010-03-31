@@ -41,7 +41,7 @@ zend_class_entry *php_ffi_struct_class_entry = NULL,
  *
  * Every user visible function must have an entry in ffi_functions[].
  */
-function_entry ffi_functions[] = {
+zend_function_entry ffi_functions[] = {
 	{NULL, NULL, NULL}	/* Must be the last line in ffi_functions[] */
 };
 /* }}} */

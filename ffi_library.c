@@ -224,7 +224,7 @@ static PHP_FUNCTION(php_ffi_context_create_instance)
 	parse_defs(obj, funcdefs);
 }
 
-function_entry php_ffi_context_funcs[] = {
+zend_function_entry php_ffi_context_funcs[] = {
 	{ "__construct", PHP_FN(php_ffi_context_create_instance), NULL },
 	{ NULL, NULL, NULL }
 };
