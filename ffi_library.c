@@ -395,12 +395,21 @@ static php_ffi_function *bind_func(php_ffi_context *ctx, char *name, int len TSR
 	return func;
 }
 
-static union _zend_function *php_ffi_method_get(zval *object, char *name, int len TSRMLS_DC)
+static union _zend_function *php_ffi_method_get(
+#if PHP_API_VERSION >= 20041225
+	zval **object_pp,
+#else
+	zval *object,
+#endif
+	char *name, int len TSRMLS_DC)
 {
 	zend_internal_function *f;
 	php_ffi_context *obj;
 	php_ffi_function *func;
-	
+#if PHP_API_VERSION >= 20041225
+	zval *object = *object_pp;
+#endif
+
 	obj = CTX_FETCH(object);
 
 	func = bind_func(obj, name, len TSRMLS_CC);
