@@ -3,7 +3,7 @@
 	     Copyright (c) 2001  John Beniton
 	     Copyright (c) 2002  Ranjit Mathew
 	
-	Ported to MSVC Intel syntax by Wez Furlong <wez@thebrainroom.com>		
+	Ported to MSVC Intel syntax by Wez Furlong <wez@php.net>		
  
    X86 Foreign Function Interface
  
